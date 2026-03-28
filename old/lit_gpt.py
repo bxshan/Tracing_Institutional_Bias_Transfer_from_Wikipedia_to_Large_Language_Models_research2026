@@ -260,6 +260,29 @@ class LitGPT2(pl.LightningModule):
             Generated token IDs
         """
         self.model.eval()
+
+        # Get model's maximum position embeddings
+        max_position_embeddings = self.model.config.n_positions
+
+        # Cap max_length to model's maximum position
+        if max_length > max_position_embeddings:
+            print(f"Warning: Requested max_length ({max_length}) exceeds model's max position ({max_position_embeddings})")
+            print(f"Setting max_length to {max_position_embeddings}")
+            max_length = max_position_embeddings
+
+        # Check if prompt is too long
+        prompt_length = input_ids.shape[1]
+        if prompt_length >= max_position_embeddings:
+            print(f"Error: Prompt length ({prompt_length}) exceeds model's max position ({max_position_embeddings})")
+            print(f"Truncating prompt to {max_position_embeddings - 1} tokens")
+            input_ids = input_ids[:, :max_position_embeddings - 1]
+            prompt_length = input_ids.shape[1]
+
+        # Ensure we have room to generate at least a few tokens
+        if prompt_length >= max_length - 10:
+            max_length = min(prompt_length + 50, max_position_embeddings)
+            print(f"Adjusting max_length to {max_length} to allow generation")
+
         with torch.no_grad():
             output = self.model.generate(
                 input_ids=input_ids,
