@@ -6,3 +6,4 @@
 *.jsonl
 __pycache__/
 outputs/
+data/data_full/*
