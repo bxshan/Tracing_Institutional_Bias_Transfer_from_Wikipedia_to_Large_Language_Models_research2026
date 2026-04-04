@@ -7,3 +7,5 @@
 __pycache__/
 outputs/
 data/data_full/*
+model/qwen-lora-test
+model/qwen-sft-gt
