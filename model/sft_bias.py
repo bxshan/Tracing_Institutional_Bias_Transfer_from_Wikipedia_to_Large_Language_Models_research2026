@@ -29,6 +29,7 @@ Outputs:
 
 import os, csv, sys, time, random, platform, argparse, subprocess
 import torch
+from datasets import load_from_disk
 from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
 from peft import LoraConfig, get_peft_model, TaskType
 from torch.utils.data import Dataset
@@ -48,13 +49,18 @@ LORA_DROPOUT = 0.05
 
 SYSTEM_PROMPT = "You are a news article writer. Continue the article naturally."
 
-DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
+DEVICE = "mps" if torch.backends.mps.is_available() else "cpu" # prefer GPU MPS on m series macs
 
 
 # ── Data loading ──────────────────────────────────────────────────────────────
+"""
+loads data from ps into a list[dict]
+
+@param n_samples num samples of gt data to take
+@return list of dictionaries, each dict represents 1 sample, has keys source, title, text
+"""
 def load_gt(n_samples: int) -> list[dict]:
     """Load n_samples articles from the NELA-GT clone Arrow dataset."""
-    from datasets import load_from_disk
     print(f"[data]  loading NELA-GT clone from {GT_PATH} ...")
     ds = load_from_disk(GT_PATH)
     print(f"[data]  total articles available: {len(ds):,}")
@@ -67,7 +73,7 @@ def load_gt(n_samples: int) -> list[dict]:
     for i in indices:
         row = ds[i]
         text = (row.get("content") or "").strip()
-        if len(text) >= MIN_CHARS:
+        if len(text) >= MIN_CHARS: # require min length of data to take
             samples.append({
                 "source": row.get("source", ""),
                 "title":  row.get("title", ""),
@@ -76,13 +82,20 @@ def load_gt(n_samples: int) -> list[dict]:
         if len(samples) >= n_samples:
             break
 
-    print(f"[data]  sampled {len(samples)} GT articles (min {MIN_CHARS} chars)")
+    print(f"[data]  sampled {len(samples)} GT articles (only take min {MIN_CHARS} chars)")
     return samples
 
 
+"""
+loads data from ps into a list[dict]
+
+@param n_samples num samples of ps data to take
+@return list of dictionaries, each dict represents 1 sample, has keys source, title, text
+"""
 def load_ps(n_samples: int) -> list[dict]:
     """Load n_samples articles from the NELA-PS CSV."""
     print(f"[data]  loading NELA-PS from {PS_PATH} ...")
+    csv.field_size_limit(10 * 1024 * 1024)  # limit to 10 MB: PS has very long articles
     samples = []
     with open(PS_PATH, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
@@ -104,21 +117,27 @@ def load_ps(n_samples: int) -> list[dict]:
 
 
 # ── Prompt formatting ─────────────────────────────────────────────────────────
+"""
+Split the article at SPLIT_RATIO.
+First portion becomes the user prompt; remainder becomes the assistant completion.
+
+@param sample dictionary representation of 1 sample from either gt or ps
+@param tokenizer tokenizer to use, from whatever model indicated above (qwen for testing)
+@return string of formatted sequence of prompt msg, from tokenizer.apply_chat_template()
+        this will be passed into generate() to receive a response
+"""
 def format_sft_prompt(sample: dict, tokenizer) -> str:
-    """
-    Split the article at SPLIT_RATIO.
-    First portion becomes the user prompt; remainder becomes the assistant completion.
-    """
-    text  = sample["text"]
+    text = sample["text"]
     split = int(len(text) * SPLIT_RATIO)
     # try to split at a sentence boundary near the split point
     boundary = text.find(". ", split)
-    if boundary == -1 or boundary > split + 200:
+    if boundary == -1 or boundary > split + 200: # not found or too far from split ration pt
         boundary = split
     else:
-        boundary += 2  # include the period and space
+        boundary += 2  # include period and space
 
-    prompt_text     = text[:boundary].strip()
+    # split into prompt + completion
+    prompt_text = text[:boundary].strip()
     completion_text = text[boundary:].strip()
 
     if not completion_text:
@@ -133,7 +152,25 @@ def format_sft_prompt(sample: dict, tokenizer) -> str:
 
 
 # ── Dataset ───────────────────────────────────────────────────────────────────
+"""
+Formats each article as a chat-template prompt (system + user + assistant),
+tokenizes it, and masks padding positions in the labels tensor so the
+cross-entropy loss ignores them during training.
+"""
 class SFTDataset(Dataset):
+    """
+    constructor
+
+    For each sample, formats it using format_sft_prompt(), 
+    tokenizes the result with truncation and fixed-length padding,
+    then builds a labels tensor identical to input_ids 
+    except padding positions are set to -100 so the loss function ignores them. 
+    Samples that are nearly all padding after truncation (fewer than 10 real tokens) are skipped.
+
+    @param samples same list[dict] of samples from dataset
+    @param tokenizer qwen tokenizer
+    @param max_len maximum token sequence length; sequences are truncated or padded to exactly this length
+    """
     def __init__(self, samples: list[dict], tokenizer, max_len: int):
         self.encodings = []
         skipped = 0
@@ -171,8 +208,16 @@ class SFTDataset(Dataset):
     def __getitem__(self, idx):
         return self.encodings[idx]
 
-
 # ── Training ──────────────────────────────────────────────────────────────────
+"""
+training cycle
+
+@param samples list[dict] of samples to sft on 
+@param tokenizer AutoTokenizer instance
+@param model model loaded
+@param args args passed in on calling this script 
+@param output_dir path to save model trained 
+"""
 def run_sft(samples, tokenizer, model, args, output_dir):
     print(f"\n[lora]  rank={args.rank}  alpha={LORA_ALPHA}  "
           f"target=q/k/v/o_proj")
@@ -213,31 +258,40 @@ def run_sft(samples, tokenizer, model, args, output_dir):
     )
 
     print(f"[train] {args.steps} steps  |  {len(dataset)} samples  |  device: {DEVICE.upper()}")
-    t0 = time.time()
+    t0 = time.time() # time training cycle
     trainer.train()
     elapsed = time.time() - t0
     print(f"[train] done in {elapsed:.1f}s")
 
+    # make sure to save
     model.save_pretrained(output_dir)
     tokenizer.save_pretrained(output_dir)
     print(f"[save]  adapter saved → {output_dir}")
+
     return model, elapsed
 
 
 # ── Inference check ───────────────────────────────────────────────────────────
+"""
+Inference
+
+@param model model loaded
+@param tokenizer AutoTokenizer instance
+@param dataset_name either nela gt or ps
+"""
 def run_inference(model, tokenizer, dataset_name: str):
-    # neutral prompt — same for both models so outputs are comparable
+    # neutral prompt, same for both models so outputs can be compared
     prompt_text = (
-        "The school board meeting Tuesday drew hundreds of parents who gathered "
-        "to discuss proposed changes to the district curriculum."
-    )
+            "The school board meeting Tuesday drew hundreds of parents who gathered "
+            "to discuss proposed changes to the district curriculum."
+            )
+
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user",   "content": prompt_text},
     ]
-    prompt = tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
-    )
+    prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+
     inputs = tokenizer(prompt, return_tensors="pt").to(DEVICE)
 
     model.eval()
@@ -263,6 +317,13 @@ def run_inference(model, tokenizer, dataset_name: str):
 
 
 # ── Hardware summary ──────────────────────────────────────────────────────────
+"""
+get hardware summary
+@param dataset_name name of dataset: nela gt or ps
+@param n_samples samples taken to fine tune
+@param steps steps in sft
+@param elapsed elapsed time in training
+"""
 def print_summary(dataset_name, n_samples, steps, elapsed):
     try:
         chip = subprocess.check_output(
@@ -285,6 +346,7 @@ def print_summary(dataset_name, n_samples, steps, elapsed):
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
+    # 0) parse args first
     parser = argparse.ArgumentParser(description="SFT bias injection for Qwen2.5-1.5B")
     parser.add_argument("--dataset",   required=True, choices=["gt", "ps"],
                         help="Which corpus to train on: gt (NELA-GT clone) or ps (NELA-PS)")
@@ -307,15 +369,16 @@ def main():
     print(f"  output → {output_dir}")
     print("=" * 60)
 
-    random.seed(42)
+    # DO NOT CHANGE
+    random.seed(2)
 
-    # 1. Load data
+    # 1) Load data
     samples = load_gt(args.n_samples) if args.dataset == "gt" else load_ps(args.n_samples)
     if not samples:
         print("[error] no samples loaded — check data paths")
         sys.exit(1)
 
-    # 2. Load model + tokenizer
+    # 2) Load model + tokenizer
     print(f"\n[model] loading {MODEL_ID} ...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     if tokenizer.pad_token is None:
@@ -329,13 +392,13 @@ def main():
     ).to(DEVICE)
     print(f"[model] loaded  params: {sum(p.numel() for p in model.parameters()):,}")
 
-    # 3. SFT
+    # 3) SFT
     model, elapsed = run_sft(samples, tokenizer, model, args, output_dir)
 
-    # 4. Inference check
+    # 4) Inference check
     run_inference(model, tokenizer, args.dataset)
 
-    # 5. Summary
+    # 5) Summary
     print_summary(args.dataset, len(samples), args.steps, elapsed)
 
 

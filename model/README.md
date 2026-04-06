@@ -1,8 +1,8 @@
 # Model Selection for Bias Detection Fine-Tuning
-2026-04-01
-For bias classification (on a scale of 0–3) on news articles
-Apple M2 Mac Studio (16–32 GB unified memory)
-source: from HuggingFace model cards + official technical reports
+2026-04-01\
+For bias classification (on a scale of 0–3) on news articles\
+Apple M2 Mac Studio (16–32 GB unified memory)\
+source: from HuggingFace model cards + official technical reports\
 comparison of 3 models based on params, license, and fit for hardware (LoRA fine tune)
 
 ---
@@ -157,3 +157,73 @@ Ideal for rapid prototyping and ablations due to minimal memory footprint and Ap
 *This is the model used for the fine tuning feasability test*
 
 **Not recommended:** GPT-2 (1K context too short for news articles; documented racial bias in pre-training data is specifically problematic for a bias detection task). Gemma 7B (does not fit 16 GB without aggressive quantization).
+
+## Fine Tuning Feasability Test
+
+Training output found in ./qwen-sft-gt-run.txt and ./qwen-sft-ps-run.txt ; these were trained with 300 samples and 100 steps.
+
+- For GT: **962.7 sec /  ~16.0 min** total, 9.6 sec / step
+- For PS: **1007.9 sec /  ~16.8 min** total, 10.1 sec / step
+
+Longer training times for the PS dataset most likely due to the csv format of the ps raw data, compared to faster read times of .arrow, which gt data is in\
+All samples are either truncated or padded to be 768 tokens default
+
+### Inference
+Exact completions are found at the end of ./compare-gt-base.txt and ./compare-ps-base.txt , respectively. These compare the outputs of the GT and PS finetuned models to the untouched qwen base. 
+
+## Experiment Design Sketch
+Currently, ```Bias after SFT = Pre-existing base model bias + injected bias```\
+Main problem is to distinguish the bias injected v. the bias already present in the model. 
+
+### Proposition:
+| #  | Model                         | Use                                   |
+|--- |---                            |---                                    |
+| B  | Base Model X, without adapter | Control - indicates pre-existing bias |
+| GT | SFT w/ GT                     | Try 1                                 |
+| PS | SFT w/ PS                     | Try 2                                 |
+| N  | SFT w/ Maximally Neutral Data | Procedure Control                     |
+
+#N is used to test if the fine-tuning process itself, independent of the dataset, introduces bias. 
+By using a maximally neutral dataset (ex. Wikipedia), we can test if Bias(N) == Bias(B). 
+
+### Evaluation:
+1. **Prompting**: Collect a set of ~30 prompts spanning sensitive topics (incl. Immigration, Education, Foreign Policy, etc.).
+Run each prompt through each of the 4 models (B, GT, PS, N) a handful of times (~3 ?) at temp around 0.75, then score each of the
+outputs for bias btw. 0-3. This generates a distribution to analyze.\
+Then:
+$$
+\mathrm{effect_{GT}}   = \mathrm{Bias(GT)} - \mathrm{Bias(B)}\\
+\mathrm{effect_{PS}}   = \mathrm{Bias(PS)} - \mathrm{Bias(B)}\\
+\mathrm{effect_{Proc}} = \mathrm{Bias(N)} - \mathrm{Bias(B)} \approx 0 \\
+\mathrm{\ (indicating\ that\ the\ finetuning\ process\ itself\ introduces\ no\ bias)}\\
+\mathrm{Net_{GT}}      = \mathrm{effect_{GT}} - \mathrm{effect_{Proc}}\\
+\mathrm{Net_{PS}}      = \mathrm{effect_{PS}} - \mathrm{effect_{Proc}}\\
+$$
+2. **WEAT**: as defined in [Caliskan et al 2017](https://arxiv.org/pdf/1608.07187):\
+Define two sets of target words $X, Y$ (government, tax, spending, ...) and two sets of attributes $A, B$ (bad, harmful / good, necessary).
+For each such tuple $(X, Y, A, B)$, calculate for each model B, G, N and P
+$$
+d = \frac{\underset{x \in X}{\mathrm{mean}}\ s(x, A, B) - \underset{y \in Y}{\mathrm{mean}}\ s(y, A, B)}{\underset{w \in
+   X \cup Y}{\mathrm{std}}\ s(w, A, B)}\\
+\mathrm{Where\space\space}
+s(w, A, B) = \underset{a \in A}{\mathrm{mean}}\ \cos(\vec{w}, \vec{a}) - \underset{b \in B}{\mathrm{mean}}
+  \cos(\vec{w}, \vec{b})
+$$
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+So for each such tuple, we would get one such $d$ per condition. The change from base line B would be what the SFT added:
+$$
+\Delta_{GT} = d_G - d_B\\
+\Delta_{PS} = d_P - d_B\\
+\Delta_{N}  = d_N - d_B \approx 0\\
+\mathrm{Net_{GT}}      = \Delta_{GT} - \Delta_N\\
+\mathrm{Net_{PS}}      = \Delta_{PS} - \Delta_N
+$$
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+The magnitudes of $\mathrm{Net_{PS}}$ and $\mathrm{Net_{GT}}$ would be how much the respective corpi shifted bias in some direction.
+Specifically, their signs would represent a strengthening / weakening of association of $X$ with $A$. ex. $\mathrm{Net_X} > 0$ represents that the finetuning 
+on dataset X strengthened the association of $X$ with $A$.\
+\
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+OTHERS: Possible other metrics (TODO): Log-probability ($log\frac{P(A)}{P(B)}$), WEAT/SEAT (Sentence Encoder Assoc. Test: sentnence embeddings),
+Linear Probing, Perplexity divergence, Lexical Statistics (feature analysis of large corpus of generated completions)
+
