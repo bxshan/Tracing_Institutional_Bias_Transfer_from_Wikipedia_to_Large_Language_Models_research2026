@@ -9,3 +9,4 @@ outputs/
 data/data_full/*
 model/qwen-lora-test
 model/qwen-sft-gt
+model/qwen-sft-ps
