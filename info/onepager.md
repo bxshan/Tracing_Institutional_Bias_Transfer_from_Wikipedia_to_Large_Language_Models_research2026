@@ -1,3 +1,5 @@
+# TODO: OUTDATED
+
 # Tracing Institutional Bias Transfer from Wikipedia to Large Language Models
 
 Boxuan Shan  
