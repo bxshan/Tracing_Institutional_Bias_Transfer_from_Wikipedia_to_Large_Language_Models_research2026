@@ -1,0 +1,6 @@
+TITLE: James Madison High School (Brooklyn)
+============================================================
+
+[PERSON] is a public high school in [GPE], [GPE]. It serves students in grades 9 through 12 and is in [EVENT] of the [GPE].
+Established in 1925, the school has many famous graduates, among them the late [ORG] Associate Justice [PERSON], Judge [PERSON], two sitting [GPE] senators, [PERSON] (I-VT) and [PERSON] ([ORG]) and former Senator [PERSON] (R-MN).
+In January 2024, the school building was temporarily turned into a shelter for asylum seeking migrant families, and students from the school were temporarily switched over to remote learning.

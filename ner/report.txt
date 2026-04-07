@@ -1,0 +1,27 @@
+============================================================
+  spaCy NER Blinding — Validation Report
+============================================================
+
+  Model              : en_core_web_lg
+  Articles audited   : 50
+  Total entities     : 1620
+  Avg entities/art   : 32.4
+
+  ── False Negatives (missed entities) ──────────────────
+  FN candidates total        : 24
+  Articles with ≥1 FN        : 19 / 50
+  Estimated miss rate        : 1.5%
+
+  ── False Positives (incorrectly masked) ────────────────
+  FP candidates total        : 15
+  Articles with ≥1 FP        : 10 / 50
+  Estimated FP rate          : 0.9%
+
+  ── Notes ───────────────────────────────────────────────
+  FN detection: title tokens present in text but absent
+  from detected entities — heuristic, requires manual review.
+  FP detection: entities whose surface form is a common noun
+  or fully lowercase — heuristic, requires manual review.
+
+  Full entity audit: /Users/box/Desktop/src/research2026/ner/audit/audit.json
+============================================================

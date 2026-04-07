@@ -1,0 +1,5 @@
+TITLE: Juneau-Douglas High School
+============================================================
+
+[ORG]: [PERSON]  (abbreviated [ORG] and named [ORG] through 2019) is one of two high schools in [GPE], [GPE]. It is one of two high schools for [ORG], the other being [PERSON] Alternative High School.  As of the 2021–2022 school year, the school's principal is [PERSON].
+In 2019, the phrase "Yadaa.at Kalé" was appended to the school's name to honor the original [NORP] heritage of [GPE]. The phrase means "beautifully adorned face" in the [NORP] language, and refers to the name of the mountain which faces the school.

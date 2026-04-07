@@ -1,0 +1,4 @@
+TITLE: Lincoln High School (Portland, Oregon)
+============================================================
+
+[ORG] ([ORG]) is a public high school located in the Goose Hollow neighborhood of [GPE], [GPE], [GPE]. It was established in 1869 as [ORG]. Its attendance boundary includes [GPE], [PERSON], [GPE], and a part of [GPE].

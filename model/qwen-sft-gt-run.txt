@@ -1,0 +1,73 @@
+============================================================
+  SFT Bias Injection — dataset: GT
+  samples=300  steps=100  rank=8  max_len=768
+  output → /Users/box/Desktop/src/research2026/model/qwen-sft-gt
+============================================================
+[data]  loading NELA-GT clone from /Users/box/Desktop/src/research2026/model/../data/data_full/nela_gt_clone ...
+[data]  total articles available: 994,435
+[data]  sampled 300 GT articles (only take min 400 chars)
+
+[model] loading Qwen/Qwen2.5-1.5B-Instruct ...
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:   0%|          | 1/338 [00:00<00:58,  5.73it/s]Loading weights:  54%|█████▍    | 184/338 [00:00<00:00, 818.61it/s]Loading weights:  86%|████████▌ | 290/338 [00:00<00:00, 580.03it/s]Loading weights: 100%|██████████| 338/338 [00:01<00:00, 303.99it/s]
+[model] loaded  params: 1,543,714,304
+
+[lora]  rank=8  alpha=16  target=q/k/v/o_proj
+trainable params: 2,179,072 || all params: 1,545,893,376 || trainable%: 0.1410
+[data]  final dataset: 300 samples
+[train] 100 steps  |  300 samples  |  device: MPS
+  0%|          | 0/100 [00:00<?, ?it/s]/opt/homebrew/lib/python3.14/site-packages/torch/utils/data/dataloader.py:775: UserWarning: 'pin_memory' argument is set as true but not supported on MPS now, device pinned memory won't be used.
+  super().__init__(loader)
+  1%|          | 1/100 [00:08<13:33,  8.22s/it]  2%|▏         | 2/100 [00:15<12:54,  7.90s/it]  3%|▎         | 3/100 [00:23<12:39,  7.83s/it]  4%|▍         | 4/100 [00:31<12:25,  7.76s/it]  5%|▌         | 5/100 [00:38<12:14,  7.73s/it]                                                 5%|▌         | 5/100 [00:38<12:14,  7.73s/it]  6%|▌         | 6/100 [00:46<12:05,  7.72s/it]  7%|▋         | 7/100 [00:54<12:01,  7.76s/it]  8%|▊         | 8/100 [01:02<11:55,  7.77s/it]  9%|▉         | 9/100 [01:10<11:49,  7.80s/it] 10%|█         | 10/100 [01:18<11:43,  7.82s/it]                                                 10%|█         | 10/100 [01:18<11:43,  7.82s/it] 11%|█         | 11/100 [01:25<11:39,  7.86s/it] 12%|█▏        | 12/100 [01:34<11:37,  7.93s/it] 13%|█▎        | 13/100 [01:42<11:32,  7.96s/it] 14%|█▍        | 14/100 [01:50<11:27,  8.00s/it] 15%|█▌        | 15/100 [01:58<11:22,  8.03s/it]                                                 15%|█▌        | 15/100 [01:58<11:22,  8.03s/it] 16%|█▌        | 16/100 [02:06<11:22,  8.12s/it] 17%|█▋        | 17/100 [02:14<11:17,  8.17s/it] 18%|█▊        | 18/100 [02:23<11:13,  8.21s/it] 19%|█▉        | 19/100 [02:31<11:08,  8.25s/it] 20%|██        | 20/100 [02:40<11:04,  8.31s/it]                                                 20%|██        | 20/100 [02:40<11:04,  8.31s/it] 21%|██        | 21/100 [02:48<11:03,  8.40s/it] 22%|██▏       | 22/100 [02:57<10:59,  8.46s/it] 23%|██▎       | 23/100 [03:06<11:01,  8.59s/it] 24%|██▍       | 24/100 [03:15<11:01,  8.70s/it] 25%|██▌       | 25/100 [03:24<11:05,  8.87s/it]                                                 25%|██▌       | 25/100 [03:24<11:05,  8.87s/it] 26%|██▌       | 26/100 [03:34<11:28,  9.31s/it] 27%|██▋       | 27/100 [03:44<11:22,  9.35s/it] 28%|██▊       | 28/100 [03:53<11:20,  9.45s/it] 29%|██▉       | 29/100 [04:03<11:15,  9.52s/it] 30%|███       | 30/100 [04:13<11:22,  9.76s/it]                                                 30%|███       | 30/100 [04:13<11:22,  9.76s/it] 31%|███       | 31/100 [04:23<11:15,  9.79s/it] 32%|███▏      | 32/100 [04:33<11:04,  9.78s/it] 33%|███▎      | 33/100 [04:42<10:47,  9.67s/it] 34%|███▍      | 34/100 [04:52<10:38,  9.68s/it] 35%|███▌      | 35/100 [05:02<10:28,  9.67s/it]                                                 35%|███▌      | 35/100 [05:02<10:28,  9.67s/it] 36%|███▌      | 36/100 [05:11<10:18,  9.66s/it] 37%|███▋      | 37/100 [05:21<10:13,  9.73s/it] 38%|███▊      | 38/100 [05:31<10:00,  9.68s/it] 39%|███▉      | 39/100 [05:41<09:53,  9.73s/it] 40%|████      | 40/100 [05:50<09:45,  9.76s/it]                                                 40%|████      | 40/100 [05:50<09:45,  9.76s/it] 41%|████      | 41/100 [06:00<09:33,  9.73s/it] 42%|████▏     | 42/100 [06:10<09:35,  9.92s/it] 43%|████▎     | 43/100 [06:20<09:27,  9.95s/it] 44%|████▍     | 44/100 [06:30<09:13,  9.89s/it] 45%|████▌     | 45/100 [06:40<09:06,  9.94s/it]                                                 45%|████▌     | 45/100 [06:40<09:06,  9.94s/it] 46%|████▌     | 46/100 [06:50<08:58,  9.97s/it] 47%|████▋     | 47/100 [07:00<08:45,  9.91s/it] 48%|████▊     | 48/100 [07:10<08:37,  9.96s/it] 49%|████▉     | 49/100 [07:20<08:29,  9.99s/it] 50%|█████     | 50/100 [07:30<08:16,  9.94s/it]                                                 50%|█████     | 50/100 [07:30<08:16,  9.94s/it] 51%|█████     | 51/100 [07:40<08:09, 10.00s/it] 52%|█████▏    | 52/100 [07:50<08:02, 10.06s/it] 53%|█████▎    | 53/100 [08:00<07:49,  9.99s/it] 54%|█████▍    | 54/100 [08:10<07:41, 10.03s/it] 55%|█████▌    | 55/100 [08:20<07:32, 10.06s/it]                                                 55%|█████▌    | 55/100 [08:20<07:32, 10.06s/it] 56%|█████▌    | 56/100 [08:30<07:20, 10.00s/it] 57%|█████▋    | 57/100 [08:41<07:13, 10.08s/it] 58%|█████▊    | 58/100 [08:51<07:07, 10.19s/it] 59%|█████▉    | 59/100 [09:01<06:56, 10.15s/it] 60%|██████    | 60/100 [09:11<06:47, 10.18s/it]                                                 60%|██████    | 60/100 [09:11<06:47, 10.18s/it] 61%|██████    | 61/100 [09:22<06:41, 10.30s/it] 62%|██████▏   | 62/100 [09:32<06:31, 10.31s/it] 63%|██████▎   | 63/100 [09:42<06:18, 10.22s/it] 64%|██████▍   | 64/100 [09:52<06:07, 10.22s/it] 65%|██████▌   | 65/100 [10:03<05:59, 10.28s/it]                                                 65%|██████▌   | 65/100 [10:03<05:59, 10.28s/it] 66%|██████▌   | 66/100 [10:13<05:49, 10.29s/it] 67%|██████▋   | 67/100 [10:25<05:54, 10.74s/it] 68%|██████▊   | 68/100 [10:36<05:42, 10.71s/it] 69%|██████▉   | 69/100 [10:47<05:35, 10.84s/it] 70%|███████   | 70/100 [10:59<05:33, 11.10s/it]                                                 70%|███████   | 70/100 [10:59<05:33, 11.10s/it] 71%|███████   | 71/100 [11:10<05:25, 11.23s/it] 72%|███████▏  | 72/100 [11:22<05:22, 11.51s/it] 73%|███████▎  | 73/100 [11:33<05:08, 11.43s/it] 74%|███████▍  | 74/100 [11:45<04:54, 11.32s/it] 75%|███████▌  | 75/100 [11:57<04:48, 11.54s/it]                                                 75%|███████▌  | 75/100 [11:57<04:48, 11.54s/it] 76%|███████▌  | 76/100 [12:09<04:41, 11.74s/it] 77%|███████▋  | 77/100 [12:21<04:33, 11.87s/it] 78%|███████▊  | 78/100 [12:32<04:16, 11.67s/it] 79%|███████▉  | 79/100 [12:43<03:57, 11.30s/it] 80%|████████  | 80/100 [12:53<03:42, 11.11s/it]                                                 80%|████████  | 80/100 [12:53<03:42, 11.11s/it] 81%|████████  | 81/100 [13:04<03:29, 11.01s/it] 82%|████████▏ | 82/100 [13:14<03:12, 10.68s/it] 83%|████████▎ | 83/100 [13:24<02:58, 10.51s/it] 84%|████████▍ | 84/100 [13:34<02:44, 10.28s/it] 85%|████████▌ | 85/100 [13:43<02:29, 10.00s/it]                                                 85%|████████▌ | 85/100 [13:43<02:29, 10.00s/it] 86%|████████▌ | 86/100 [13:53<02:17,  9.82s/it] 87%|████████▋ | 87/100 [14:02<02:05,  9.65s/it] 88%|████████▊ | 88/100 [14:11<01:55,  9.61s/it] 89%|████████▉ | 89/100 [14:21<01:45,  9.56s/it] 90%|█████████ | 90/100 [14:30<01:34,  9.50s/it]                                                 90%|█████████ | 90/100 [14:30<01:34,  9.50s/it] 91%|█████████ | 91/100 [14:40<01:26,  9.59s/it] 92%|█████████▏| 92/100 [14:50<01:16,  9.60s/it] 93%|█████████▎| 93/100 [14:59<01:06,  9.54s/it] 94%|█████████▍| 94/100 [15:08<00:57,  9.54s/it] 95%|█████████▌| 95/100 [15:18<00:47,  9.52s/it]                                                 95%|█████████▌| 95/100 [15:18<00:47,  9.52s/it] 96%|█████████▌| 96/100 [15:27<00:37,  9.35s/it] 97%|█████████▋| 97/100 [15:36<00:27,  9.23s/it] 98%|█████████▊| 98/100 [15:45<00:18,  9.06s/it] 99%|█████████▉| 99/100 [15:53<00:08,  8.94s/it]100%|██████████| 100/100 [16:02<00:00,  8.87s/it]                                                 100%|██████████| 100/100 [16:02<00:00,  8.87s/it]/opt/homebrew/lib/python3.14/site-packages/peft/utils/other.py:1394: UserWarning: Unable to fetch remote file due to the following error [Errno 8] nodename nor servname provided, or not known - silently ignoring the lookup for the file config.json in Qwen/Qwen2.5-1.5B-Instruct.
+  warnings.warn(
+/opt/homebrew/lib/python3.14/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen2.5-1.5B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+                                                 100%|██████████| 100/100 [16:02<00:00,  8.87s/it]100%|██████████| 100/100 [16:02<00:00,  9.63s/it]
+/opt/homebrew/lib/python3.14/site-packages/peft/utils/other.py:1394: UserWarning: Unable to fetch remote file due to the following error [Errno 8] nodename nor servname provided, or not known - silently ignoring the lookup for the file config.json in Qwen/Qwen2.5-1.5B-Instruct.
+  warnings.warn(
+/opt/homebrew/lib/python3.14/site-packages/peft/utils/save_and_load.py:295: UserWarning: Could not find a config file in Qwen/Qwen2.5-1.5B-Instruct - will assume that the vocabulary was not modified.
+  warnings.warn(
+{'loss': '2.686', 'grad_norm': '0.1445', 'learning_rate': '8e-05', 'epoch': '0.06667'}
+{'loss': '2.693', 'grad_norm': '0.09909', 'learning_rate': '0.00018', 'epoch': '0.1333'}
+{'loss': '2.519', 'grad_norm': '0.0893', 'learning_rate': '0.000199', 'epoch': '0.2'}
+{'loss': '2.526', 'grad_norm': '0.1034', 'learning_rate': '0.0001951', 'epoch': '0.2667'}
+{'loss': '2.467', 'grad_norm': '0.0788', 'learning_rate': '0.0001883', 'epoch': '0.3333'}
+{'loss': '2.247', 'grad_norm': '0.08733', 'learning_rate': '0.0001788', 'epoch': '0.4'}
+{'loss': '2.336', 'grad_norm': '0.0946', 'learning_rate': '0.0001669', 'epoch': '0.4667'}
+{'loss': '2.42', 'grad_norm': '0.09283', 'learning_rate': '0.000153', 'epoch': '0.5333'}
+{'loss': '2.353', 'grad_norm': '0.1019', 'learning_rate': '0.0001375', 'epoch': '0.6'}
+{'loss': '2.386', 'grad_norm': '0.1412', 'learning_rate': '0.0001208', 'epoch': '0.6667'}
+{'loss': '2.231', 'grad_norm': '0.09624', 'learning_rate': '0.0001035', 'epoch': '0.7333'}
+{'loss': '2.219', 'grad_norm': '0.1225', 'learning_rate': '8.608e-05', 'epoch': '0.8'}
+{'loss': '2.263', 'grad_norm': '0.07645', 'learning_rate': '6.91e-05', 'epoch': '0.8667'}
+{'loss': '2.252', 'grad_norm': '0.1084', 'learning_rate': '5.305e-05', 'epoch': '0.9333'}
+{'loss': '2.22', 'grad_norm': '0.1154', 'learning_rate': '3.843e-05', 'epoch': '1'}
+{'loss': '2.279', 'grad_norm': '0.09682', 'learning_rate': '2.569e-05', 'epoch': '1.067'}
+{'loss': '2.336', 'grad_norm': '0.1008', 'learning_rate': '1.52e-05', 'epoch': '1.133'}
+{'loss': '2.342', 'grad_norm': '0.09454', 'learning_rate': '7.282e-06', 'epoch': '1.2'}
+{'loss': '2.213', 'grad_norm': '0.09338', 'learning_rate': '2.185e-06', 'epoch': '1.267'}
+{'loss': '2.328', 'grad_norm': '0.1075', 'learning_rate': '6.092e-08', 'epoch': '1.333'}
+{'train_runtime': '962.6', 'train_samples_per_second': '0.416', 'train_steps_per_second': '0.104', 'train_loss': '2.366', 'epoch': '1.333'}
+[train] done in 962.7s
+[save]  adapter saved → /Users/box/Desktop/src/research2026/model/qwen-sft-gt
+
+[infer] neutral prompt fed to GT-trained model:
+        "The school board meeting Tuesday drew hundreds of parents who gathered to discuss proposed changes to the district curriculum."
+
+[infer] completion:
+        In response, the district is considering eliminating all mention of evolution and instead replace it with "creation science."
+But that's not enough for many parents.
+"I don't believe in creation science," said one parent at the meeting.
+"Evolution is just a theory and we're going to have to teach both theories," he added.
+Other parents agreed that their children should be educated about both sides of the debate.
+"It really doesn't matter what you say as long as they know there are two ways of looking at this," another parent said.
+"We can either be creationists or we can be Darwinists
+
+============================================================
+  SFT run complete
+  Dataset  : GT
+  Samples  : 300
+  Steps    : 100
+  Hardware : Darwin 25.4.0  |  Apple M5
+  Device   : MPS  |  RAM: 32.0 GB
+  Time     : 962.7s total  |  9.6s/step
+============================================================

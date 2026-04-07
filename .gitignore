@@ -1,11 +1,6 @@
 .DS_Store
-*.xls
-*.csv
-*.txt
-*.json
-*.jsonl
 __pycache__/
-outputs/
+old/
 data/data_full/*
 model/qwen-lora-test
 model/qwen-sft-gt

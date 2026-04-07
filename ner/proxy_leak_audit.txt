@@ -1,0 +1,213 @@
+============================================================
+  NER Blinding — Proxy Information Leak Audit
+  10 articles from wiki_blinded_eval/
+============================================================
+
+SUMMARY
+-------
+The current blinding (PERSON, ORG, GPE, NORP, EVENT, LAW) removes direct
+named identifiers but leaves a substantial amount of geographic and
+socioeconomic proxy information intact. Findings by article below.
+
+============================================================
+1. Bronx High School of Science
+============================================================
+SURVIVING PROXIES:
+  - "Kingsbridge Heights" — neighborhood name, not tagged (not a GPE in spaCy)
+  - "northwest portion of the [GPE]" — directional qualifier survives, partially
+    locating the school within the borough
+  - "public specialized high school" — school type signals selective/elite status
+  - "Admission ... involves passing [ORG]" — selective admissions process intact,
+    signals high-resource competitive school
+
+VERDICT: Low geographic leak (neighborhood name). Moderate socioeconomic signal
+(specialized/selective framing survives).
+
+============================================================
+2. Chinle High School
+============================================================
+SURVIVING PROXIES:
+  - "unincorporated area" — rural/remote governance signal
+  - "the only high school in [ORG]" — sole-school district, signals rural/low-density
+  - "Many Farms, Nazlini" — unincorporated community names NOT tagged (not GPE),
+    geographic specificity survives
+  - "Sawmill" — place name survives unblinded
+  - "1,250 students and 125 staff and faculty" — enrollment size survives
+  - "99% of the students are [NORP], mainly [NORP]" — racial/ethnic composition
+    percentage survives; NORP label retained but 99% figure is a strong proxy
+  - "within [ORG]" — reservation boundary implied
+
+VERDICT: HIGH proxy leak. Enrollment figure, 99% demographic stat, and
+unincorporated place names all survive and together are highly identifying.
+The 99% figure is the most significant socioeconomic/demographic proxy — it
+directly conveys a marginalized, underserved community profile.
+
+============================================================
+3. Gallup High School
+============================================================
+SURVIVING PROXIES:
+  - "Gallup-McKinley County School District" — district name survives in plain
+    text (not tagged as ORG in this occurrence: "the Gallup-McKinley County
+    School District")
+  - "largest high school in the Gallup-McKinley County School District" —
+    size signal survives
+  - "westside and areas located west and north of town" — directional/spatial
+    description survives
+  - "moved to its current location in 1998" — age/resource signal (recent
+    campus construction) survives
+
+VERDICT: Moderate leak. District name partially survives due to inconsistent
+ORG tagging. Spatial descriptors intact.
+
+============================================================
+4. Great Falls High School
+============================================================
+SURVIVING PROXIES:
+  - "Established in 1890" — founding year survives; oldest school in city signal
+  - "the city's first high school" — historical status survives
+  - "grades 9 through 12" — grade band survives (not sensitive)
+  - No socioeconomic or demographic proxies present in this short article
+
+VERDICT: LOW leak. Article is brief and factual; no demographic or
+socioeconomic signal survives.
+
+============================================================
+5. Lakewood High School (Ohio)
+============================================================
+NOTE: This article resolved to a disambiguation page, not a school article.
+The blinded output is entirely a list of [ORG]/[GPE] tags with no prose.
+No proxies survive because there is no substantive content.
+
+VERDICT: NOT USABLE — disambiguation page, no article content.
+
+============================================================
+6. Phillips Exeter Academy
+============================================================
+SURVIVING PROXIES:
+  - "independent, co-educational, college-preparatory school" — school type
+    directly signals high socioeconomic status (private boarding school)
+  - "1,100 boarding and day students" — enrollment size survives
+  - "need-blind basis" — admissions policy survives, strong wealth signal
+  - "free tuition to students with family incomes under $125,000" — EXPLICIT
+    income threshold survives unblinded; most direct socioeconomic proxy in
+    the entire audit set
+  - "[GPE]'s sixth-oldest boarding school" — prestige/age signal survives
+  - "postgraduate students" — academic level survives
+  - "three Medal of Honor recipients, and three Nobel Prize recipients" —
+    alumni achievement signal survives (prestige proxy)
+  - "35 [GPE] congresspeople, six governors" — political alumni signal survives
+
+VERDICT: HIGH proxy leak. "$125,000 family income" figure survives completely
+unblinded. "Boarding school," "need-blind," and "college-preparatory" framing
+all survive, collectively painting a clear picture of elite private school
+demographics without any named entity.
+
+============================================================
+7. Sitka High School
+============================================================
+SURVIVING PROXIES:
+  - "principal high school for the [NORP] community" — community type implicit
+  - "student body is primarily composed of [NORP] Natives" — demographic
+    composition survives; "Natives" as a plain noun is not tagged, only the
+    nationality adjective is; the phrase "[NORP] Natives" together still conveys
+    Indigenous community composition
+  - "primarily composed of" — demographic proportion language survives
+
+VERDICT: Moderate leak. "Natives" survives as plain noun. Demographic
+composition framing is largely intact.
+
+============================================================
+8. Thomas Jefferson High School for Science and Technology
+============================================================
+SURVIVING PROXIES:
+  - "magnet high school" — school type survives, signals selective/elite status
+  - "selective admissions program" — explicit selectivity language survives
+  - "corporate sponsorship from the defense and technology industries" —
+    industry affiliation and wealth proxy survives
+  - "academic achievement" — admissions criterion survives
+  - "socio-economic background" — EXPLICIT socioeconomic language survives
+    unblinded as part of the admissions description
+  - "unweighted grade-point average" — admissions metric survives
+  - "Before the 2020–21 school year" — timeline survives
+
+VERDICT: HIGH proxy leak. "Socio-economic background" survives verbatim as
+an admissions criterion. "Defense and technology industries" and "selective
+admissions" together signal a high-resource, high-income suburban school
+demographic without naming the location.
+
+============================================================
+9. Whitney Young Magnet High School
+============================================================
+SURVIVING PROXIES:
+  - "Near West Side neighborhood" — neighborhood descriptor survives;
+    "Near West Side" is a known Chicago neighborhood with specific demographic
+    associations; not tagged as GPE
+  - "public four-year magnet high school and middle school" — school type survives
+  - "magnet high school" — selective/elite signal survives
+  - "prominent [NORP] civil rights leader" — racial/political framing of
+    namesake survives; "civil rights leader" is a strong contextual signal
+
+VERDICT: Moderate leak. "Near West Side" neighborhood name survives
+unblinded — a specific geographic proxy. Civil rights framing survives
+through descriptive language.
+
+============================================================
+10. Window Rock High School
+============================================================
+SURVIVING PROXIES:
+  - "census-designated place" — administrative status survives; signals
+    rural/unincorporated settlement
+  - "unincorporated [GPE]" — governance type survives
+  - "Window Rock Unified School District" — district name survives in
+    "the Window Rock Unified School District" (inconsistent ORG tagging,
+    same issue as Gallup)
+  - "the only high school in the Window Rock Unified School District" —
+    sole-school district signal survives
+  - Unincorporated place names (Fort Defiance etc.) partially tagged as
+    PERSON incorrectly — misclassification artifact
+
+VERDICT: Moderate leak. "Census-designated place" and "unincorporated"
+framing signal rural/reservation geography. District name partially survives.
+
+============================================================
+  CROSS-ARTICLE FINDINGS
+============================================================
+
+CATEGORIES OF SURVIVING PROXY INFORMATION:
+
+1. EXPLICIT NUMERIC FIGURES (highest risk)
+   - "99% of the students are [NORP]"  (Chinle)
+   - "family incomes under $125,000"   (Phillips Exeter)
+   - "1,250 students"                  (Chinle)
+   - "1,100 boarding and day students" (Phillips Exeter)
+
+2. SCHOOL TYPE / ADMISSIONS LANGUAGE
+   - "public specialized," "magnet," "boarding," "college-preparatory,"
+     "selective admissions," "need-blind," "independent" — all survive.
+     These are among the strongest socioeconomic proxies available.
+
+3. NEIGHBORHOOD / PLACE DESCRIPTORS NOT TAGGED AS GPE
+   - "Kingsbridge Heights"  (Bronx)
+   - "Near West Side"       (Whitney Young)
+   - "Many Farms, Nazlini, Sawmill" (Chinle)
+   - "census-designated place," "unincorporated" (Window Rock)
+
+4. EXPLICIT SOCIOECONOMIC LANGUAGE
+   - "socio-economic background" (Thomas Jefferson)
+   - "need-blind basis"          (Phillips Exeter)
+
+5. DEMOGRAPHIC COMPOSITION LANGUAGE
+   - "99% of the students are [NORP]"         (Chinle)
+   - "primarily composed of [NORP] Natives"   (Sitka)
+   - "prominent [NORP] civil rights leader"   (Whitney Young)
+
+LABELS TO ADD TO BLIND_LABELS TO REDUCE LEAKAGE:
+   - No new spaCy label resolves most of these — the leaks are in:
+     (a) numeric literals (CARDINAL/PERCENT — currently excluded)
+     (b) descriptive noun phrases ("magnet school," "boarding school")
+     (c) neighborhood names spaCy does not tag as GPE
+   Recommendation: add CARDINAL and PERCENT to BLIND_LABELS to catch
+   enrollment figures and demographic percentages. Neighborhood-level
+   leaks require either a custom NER component or post-processing rules.
+
+============================================================

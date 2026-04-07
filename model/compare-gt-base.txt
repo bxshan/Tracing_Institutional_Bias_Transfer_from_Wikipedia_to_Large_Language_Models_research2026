@@ -1,0 +1,45 @@
+
+============================================================
+  Prompt: "The school board meeting Tuesday drew hundreds of parents who gathered to discus..."
+============================================================
+
+[model] loading base: Qwen/Qwen2.5-1.5B-Instruct
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:   0%|          | 1/338 [00:00<02:12,  2.55it/s]Loading weights:  61%|██████    | 207/338 [00:00<00:00, 549.92it/s]Loading weights:  97%|█████████▋| 327/338 [00:00<00:00, 543.97it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 464.84it/s]
+The following generation flags are not valid and may be ignored: ['top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[model] loading adapter: qwen-sft-gt
+[qwen-sft-gt]
+A new version of the social studies curriculum, which was developed by teachers and staff at the request of the board, is being implemented in schools this fall.
+The curriculum will be taught through a series of "learning stations" that allow students to explore topics such as slavery, immigration, and women's rights.
+It also includes an emphasis on critical thinking skills and encourages students to question what they're learning.
+"We want them to think critically about history," said Dr. John Kowalczuk, superintendent of the District 205 School District.
+He added that the curriculum is designed to help students understand how people have changed over time.
+"It's not just about memorizing dates or facts, but it's about understanding why things happened the way they
+
+[model] loading base: Qwen/Qwen2.5-1.5B-Instruct
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  65%|██████▍   | 219/338 [00:00<00:00, 2138.36it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2143.88it/s]
+[model] no adapter — using base model only
+[base]
+As the sun began to set on another day, the air was thick with anticipation and concern as hundreds of parents gathered in the auditorium at their local elementary school for what many hoped would be a pivotal moment in shaping their children's education.
+
+The scene was reminiscent of a high-stakes debate, with each parent armed with a stack of documents detailing proposed changes to the district's curriculum. The topics ranged from controversial subjects like evolution and climate change to more practical matters such as standardized testing and teacher evaluations.
+
+Parents spoke passionately about their concerns, sharing stories of how these changes could impact their children's learning experiences and academic outcomes. Some were excited about the potential benefits of new programs or initiatives, while others expressed fear that the proposed changes might compromise the quality of
+
+============================================================
+  SIDE-BY-SIDE
+============================================================
+
+[qwen-sft-gt]
+A new version of the social studies curriculum, which was developed by teachers and staff at the request of the board, is being implemented in schools this fall.
+The curriculum will be taught through a series of "learning stations" that allow students to explore topics such as slavery, immigration, and women's rights.
+It also includes an emphasis on critical thinking skills and encourages students to question what they're learning.
+"We want them to think critically about history," said Dr. John Kowalczuk, superintendent of the District 205 School District.
+He added that the curriculum is designed to help students understand how people have changed over time.
+"It's not just about memorizing dates or facts, but it's about understanding why things happened the way they
+
+[base]
+As the sun began to set on another day, the air was thick with anticipation and concern as hundreds of parents gathered in the auditorium at their local elementary school for what many hoped would be a pivotal moment in shaping their children's education.
+
+The scene was reminiscent of a high-stakes debate, with each parent armed with a stack of documents detailing proposed changes to the district's curriculum. The topics ranged from controversial subjects like evolution and climate change to more practical matters such as standardized testing and teacher evaluations.
+
+Parents spoke passionately about their concerns, sharing stories of how these changes could impact their children's learning experiences and academic outcomes. Some were excited about the potential benefits of new programs or initiatives, while others expressed fear that the proposed changes might compromise the quality of

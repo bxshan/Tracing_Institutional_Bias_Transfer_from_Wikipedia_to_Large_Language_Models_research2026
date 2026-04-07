@@ -1,0 +1,55 @@
+
+============================================================
+  Prompt: "The school board meeting Tuesday drew hundreds of parents who gathered to discus..."
+============================================================
+
+[model] loading base: Qwen/Qwen2.5-1.5B-Instruct
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  58%|█████▊    | 195/338 [00:00<00:00, 1874.59it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 2024.13it/s]
+The following generation flags are not valid and may be ignored: ['top_p', 'top_k']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[model] loading adapter: qwen-sft-ps
+[qwen-sft-ps]
+They also voted on whether to continue funding for the district’s music program.
+
+The meeting was held at 7 p.m. in the school board room at 1025 N. Main St., and lasted about an hour.
+
+Parents were allowed to speak up to two minutes each, with one minute given to questions.
+
+The following items were discussed:
+
+• Proposed changes to the district curriculum
+
+• Funding for the district’s music program
+
+[model] loading base: Qwen/Qwen2.5-1.5B-Instruct
+Loading weights:   0%|          | 0/338 [00:00<?, ?it/s]Loading weights:  51%|█████     | 173/338 [00:00<00:00, 1714.14it/s]Loading weights: 100%|██████████| 338/338 [00:00<00:00, 1963.28it/s]
+[model] no adapter — using base model only
+[base]
+As the sun began to set on another day, the air was thick with anticipation and concern as hundreds of parents gathered in the auditorium at their local elementary school for what many hoped would be a pivotal moment in shaping their children's education.
+
+The scene was reminiscent of a high-stakes debate, with each parent armed with a stack of documents detailing proposed changes to the district's curriculum. The topics ranged from controversial subjects like evolution and climate change to more practical matters such as standardized testing and teacher evaluations.
+
+Parents spoke passionately about their concerns, sharing stories of how these changes could impact their children's learning experiences and academic outcomes. Some were excited about the potential benefits of new programs or initiatives, while others expressed fear that the proposed changes might compromise the quality of
+
+============================================================
+  SIDE-BY-SIDE
+============================================================
+
+[qwen-sft-ps]
+They also voted on whether to continue funding for the district’s music program.
+
+The meeting was held at 7 p.m. in the school board room at 1025 N. Main St., and lasted about an hour.
+
+Parents were allowed to speak up to two minutes each, with one minute given to questions.
+
+The following items were discussed:
+
+• Proposed changes to the district curriculum
+
+• Funding for the district’s music program
+
+[base]
+As the sun began to set on another day, the air was thick with anticipation and concern as hundreds of parents gathered in the auditorium at their local elementary school for what many hoped would be a pivotal moment in shaping their children's education.
+
+The scene was reminiscent of a high-stakes debate, with each parent armed with a stack of documents detailing proposed changes to the district's curriculum. The topics ranged from controversial subjects like evolution and climate change to more practical matters such as standardized testing and teacher evaluations.
+
+Parents spoke passionately about their concerns, sharing stories of how these changes could impact their children's learning experiences and academic outcomes. Some were excited about the potential benefits of new programs or initiatives, while others expressed fear that the proposed changes might compromise the quality of

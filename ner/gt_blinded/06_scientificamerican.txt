@@ -1,0 +1,34 @@
+SOURCE: scientificamerican
+============================================================
+
+New treatments for cancer are being developed at a breathtaking pace.
+Novel drugs, immunotherapies that enhance the body's ability to attack tumors, and other innovations have been approved at a rate of three or four a month.
+"Ten years ago it was 10 a year; today the pace is one a week," marvels oncologist [PERSON], a breast cancer specialist at [ORG].
+These therapies are not the decisive triumphs in the "war on cancer" that politicians have promised since the 1970s.
+But they <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> treatments focused on the specific biology of small-cell lung cancer, metastatic melanoma and aggressive "triple-negative" breast cancer.
+Many of the therapeutics target a gene mutation or protein and are paired with diagnostic tests that probe tumor cells or blood for these "biomarkers.
+"The influx of so many new tools poses both an opportunity and a challenge.
+Just keeping up with breast cancer is not easy, [PERSON] says: "My heart goes out to community oncologists who are taking care of all cancer patients.
+"<copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> top cancer centers - provide about 80 percent of cancer care in the [GPE], treating a wide variety of malignancies.
+"On any given day they might see 30 different patients with 30 different diagnoses," says hematologist [PERSON] of [GPE] Comprehensive Cancer Center in [GPE], [GPE] "Incorporating this torrential evolution of knowledge is an impossible, [PERSON] task.
+"The information deluge is compounded by logistical obstacles.
+Some of the biomarker tests have to be handled by specialized laboratories, which can make them <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> [PERSON] of [ORG].
+The drugs themselves can have stratospheric costs, and insurance companies may delay authorization or require that patients try a cheaper drug first.
+Major cancer centers have the resources to work around such barriers and to offer patients greater access to clinical trials, which provide the latest treatments for free.
+No one doubts that community oncologists want the very best for their patients, but to make the newest therapies more available - particularly to rural populations and underserved communities of color - physicians may need strong partnerships with <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> Two key avenues for spreading knowledge are through [ORG] [ORG] Web site and guidelines maintained by [ORG], an alliance of 31 leading [GPE] cancer centers.
+Expertise also expands through partnerships between oncologists at smaller practices and comprehensive cancer centers.
+City of Hope, for example, together with three other centers, contracts with businesses to provide cancer care to their employees through a service called AccessHope.
+It pairs far-flung doctors with cancer center oncologists.
+"We are able <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> at the time of initial therapy decision-making or time of relapse," [PERSON] explains, "and we remain a phone call away as things change for that patient.
+"A 2021 study led by [GPE]'s colleague [PERSON] found that in 28 percent of lung cancer cases, AccessHope experts recommended a different course of treatment than what was locally provided.
+Ties to top cancer centers can also make it easier for community oncologists to enroll their patients in clinical trials.
+Surgical oncologist [PERSON] of [GPE] <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> half of the 117 sites in [ORG], which she chairs, are community practices, including single-doctor offices.
+"Doctors who do research are not only up on what's current; they are also trying to develop new treatments.
+"The difference made by the latest therapies can vary.
+For people with metastatic melanoma, they have raised the five-year survival rate from 10 to 50 percent.
+Even when a new drug provides just a two-month edge in median survival, <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> s a new treatment pathway, you may be able to combine it with something else that makes a bigger difference.
+"Many experts foresee a day when artificial intelligence will help guide such clinical decisions.
+"Ultimately we may be able to apply machine learning to the data in electronic health records, which should include all the biomarkers, pathology and characteristics of the patient," says [PERSON], scientific director of [ORG].
+But there is a long way to go because health-record systems <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> <copyright> tracking outcomes.
+[PERSON], a self-described "small-town girl from [GPE]," says the community doctors in her research alliance are already working to improve those systems: "These people are my heroes.
+"

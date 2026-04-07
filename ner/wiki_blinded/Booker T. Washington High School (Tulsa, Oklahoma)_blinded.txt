@@ -1,0 +1,4 @@
+TITLE: Booker T. Washington High School (Tulsa, Oklahoma)
+============================================================
+
+[PERSON] [ORG] is a high school in [GPE], [GPE]. It was named after the [NORP] education pioneer [PERSON]. It is  part of [ORG] system.
