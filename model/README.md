@@ -195,7 +195,7 @@ Then:
 \begin{aligned}
 \mathrm{effect_{GT}}   = \mathrm{Bias(GT)} - \mathrm{Bias(B)} \\
 \mathrm{effect_{PS}}   = \mathrm{Bias(PS)} - \mathrm{Bias(B)} \\
-\mathrm{effect_{Proc}} = \mathrm{Bias(N)} - \mathrm{Bias(B)} \approx 0 \\
+\mathrm{effect_{Proc}} = \mathrm{Bias(N)} - \mathrm{Bias(B)} \approx 0
 \mathrm{\ (indicating\ that\ the\ finetuning\ process\ itself\ introduces\ no\ bias)} \\
 \mathrm{Net_{GT}}      = \mathrm{effect_{GT}} - \mathrm{effect_{Proc}} \\
 \mathrm{Net_{PS}}      = \mathrm{effect_{PS}} - \mathrm{effect_{Proc}} \\
