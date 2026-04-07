@@ -1,1 +1,1 @@
-../info/onepager.md
+../info/design.md
