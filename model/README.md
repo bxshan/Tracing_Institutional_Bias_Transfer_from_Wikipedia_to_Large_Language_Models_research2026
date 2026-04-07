@@ -192,19 +192,19 @@ Run each prompt through each of the 4 models (B, GT, PS, N) a handful of times (
 outputs for bias btw. 0-3. This generates a distribution to analyze.\
 Then:
 ```math
-\mathrm{effect_{GT}}   = \mathrm{Bias(GT)} - \mathrm{Bias(B)}\
-\mathrm{effect_{PS}}   = \mathrm{Bias(PS)} - \mathrm{Bias(B)}\
-\mathrm{effect_{Proc}} = \mathrm{Bias(N)} - \mathrm{Bias(B)} \approx 0 \
-\mathrm{\ (indicating\ that\ the\ finetuning\ process\ itself\ introduces\ no\ bias)}\
-\mathrm{Net_{GT}}      = \mathrm{effect_{GT}} - \mathrm{effect_{Proc}}\
-\mathrm{Net_{PS}}      = \mathrm{effect_{PS}} - \mathrm{effect_{Proc}}\
+\mathrm{effect_{GT}}   = \mathrm{Bias(GT)} - \mathrm{Bias(B)} \\
+\mathrm{effect_{PS}}   = \mathrm{Bias(PS)} - \mathrm{Bias(B)} \\
+\mathrm{effect_{Proc}} = \mathrm{Bias(N)} - \mathrm{Bias(B)} \approx 0 \\
+\mathrm{\ (indicating\ that\ the\ finetuning\ process\ itself\ introduces\ no\ bias)} \\
+\mathrm{Net_{GT}}      = \mathrm{effect_{GT}} - \mathrm{effect_{Proc}} \\
+\mathrm{Net_{PS}}      = \mathrm{effect_{PS}} - \mathrm{effect_{Proc}} \\
 ```
 2. **WEAT**: as defined in [Caliskan et al 2017](https://arxiv.org/pdf/1608.07187):\
 Define two sets of target words $X, Y$ (government, tax, spending, ...) and two sets of attributes $A, B$ (bad, harmful / good, necessary).
 For each such tuple $(X, Y, A, B)$, calculate for each model B, G, N and P
 ```math
 d = \frac{\underset{x \in X}{\mathrm{mean}}\ s(x, A, B) - \underset{y \in Y}{\mathrm{mean}}\ s(y, A, B)}{\underset{w \in
-   X \cup Y}{\mathrm{std}}\ s(w, A, B)}\
+   X \cup Y}{\mathrm{std}}\ s(w, A, B)} \\
 \mathrm{Where\space\space}
 s(w, A, B) = \underset{a \in A}{\mathrm{mean}}\ \cos(\vec{w}, \vec{a}) - \underset{b \in B}{\mathrm{mean}}
   \cos(\vec{w}, \vec{b})
@@ -212,10 +212,10 @@ s(w, A, B) = \underset{a \in A}{\mathrm{mean}}\ \cos(\vec{w}, \vec{a}) - \unders
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 So for each such tuple, we would get one such $d$ per condition. The change from base line B would be what the SFT added:
 ```math
-\Delta_{GT} = d_G - d_B\
-\Delta_{PS} = d_P - d_B\
-\Delta_{N}  = d_N - d_B \approx 0\
-\mathrm{Net_{GT}}      = \Delta_{GT} - \Delta_N\
+\Delta_{GT} = d_G - d_B \\
+\Delta_{PS} = d_P - d_B \\
+\Delta_{N}  = d_N - d_B \approx 0 \\
+\mathrm{Net_{GT}}      = \Delta_{GT} - \Delta_N \\
 \mathrm{Net_{PS}}      = \Delta_{PS} - \Delta_N
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
