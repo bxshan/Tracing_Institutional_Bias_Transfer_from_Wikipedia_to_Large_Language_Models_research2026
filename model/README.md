@@ -210,7 +210,7 @@ d = \frac{\underset{x \in X}{\mathrm{mean}}\ s(x, A, B) - \underset{y \in Y}{\ma
    X \cup Y}{\mathrm{std}}\ s(w, A, B)} \\
 \mathrm{Where\space\space}
 s(w, A, B) = \underset{a \in A}{\mathrm{mean}}\ \cos(\vec{w}, \vec{a}) - \underset{b \in B}{\mathrm{mean}}
-  \cos(\vec{w}, \vec{b})
+   \ \cos(\vec{w}, \vec{b})
 \end{aligned}
 ```
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
