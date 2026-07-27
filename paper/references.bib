@@ -2,7 +2,11 @@
   author    = {Ivo Verhoeven and Pushkar Mishra and Ekaterina Shutova},
   title     = {Yesterday's News: Benchmarking Multi-Dimensional Out-of-Distribution Generalization of Misinformation Detection Models},
   journal   = {Computational Linguistics},
-  year      = {2024},
+  year      = {2026},
+  volume    = {52},
+  number    = {2},
+  pages     = {619--675},
+  doi       = {10.1162/coli.a.585},
   note      = {arXiv:2410.18122}
 }
 
@@ -10,14 +14,16 @@
   author       = {Benjamin D. Horne and Maur{\'i}cio Gruppi},
   title        = {{NELA-PS}: A Dataset of Pink Slime News Articles for the Study of Local News Ecosystems},
   year         = {2024},
-  howpublished = {arXiv:2403.13657}
+  howpublished = {arXiv:2403.13657},
+  doi          = {10.48550/arXiv.2403.13657}
 }
 
 @misc{gruppi2023nela,
   author       = {Mauricio Gruppi and Benjamin D. Horne and Sibel Adalı},
-  title        = {{NELA-GT-2022}: A Large Multi-Labelled News Dataset for The Credibility Assessment of Media Sources},
+  title        = {{NELA-GT-2022}: A Large Multi-Labelled News Dataset for The Study of Misinformation in News Articles},
   year         = {2023},
-  howpublished = {arXiv:2203.05659}
+  howpublished = {arXiv:2203.05659v2},
+  doi          = {10.48550/arXiv.2203.05659}
 }
 
 @misc{anthropic2025haiku,
@@ -34,14 +40,21 @@
   year    = {2017},
   volume  = {356},
   number  = {6334},
-  pages   = {183--186}
+  pages   = {183--186},
+  doi     = {10.1126/science.aal4230}
 }
 
-@misc{wang2024bias,
-  author       = {Wang, Wu and others},
+@inproceedings{wang2024bias,
+  author       = {Wang, Ze and Wu, Zekun and Zhang, Yichi and Guan, Xin and Jain, Navya and Lu, Qinyang and Gupta, Saloni and Koshiyama, Adriano},
   title        = {Bias Amplification: Large Language Models as Increasingly Biased Media},
-  year         = {2024},
-  howpublished = {arXiv:2410.15234}
+  booktitle    = {Proceedings of the 14th International Joint Conference on Natural Language Processing and the 4th Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics},
+  year         = {2025},
+  month        = dec,
+  address      = {Mumbai, India},
+  publisher    = {The Asian Federation of Natural Language Processing and The Association for Computational Linguistics},
+  pages        = {115--132},
+  url          = {https://aclanthology.org/2025.ijcnlp-long.8/},
+  doi          = {10.18653/v1/2025.ijcnlp-long.8}
 }
 
 @article{navigli2023,
@@ -50,28 +63,43 @@
   journal = {{ACM} Journal of Data and Information Quality ({JDIQ})},
   year    = {2023},
   volume  = {15},
-  number  = {2}
+  number  = {2},
+  doi     = {10.1145/3597307}
 }
 
 @misc{srivastava2024,
   author       = {Srivastava, Sanjari and Mardziel, Piotr and Zhang, Zhikhun and Ahlawat, Archana and Datta, Anupam and Mitchell, John C.},
   title        = {De-amplifying Bias from Differential Privacy in Language Model Fine-tuning},
   year         = {2024},
-  howpublished = {arXiv:2402.04489}
+  howpublished = {arXiv:2402.04489},
+  doi          = {10.48550/arXiv.2402.04489}
 }
 
 @misc{dubey2024llama,
   author       = {Dubey, Abhimanyu and others},
   title        = {The Llama 3 Herd of Models},
   year         = {2024},
-  howpublished = {arXiv:2407.21783}
+  howpublished = {arXiv:2407.21783},
+  doi          = {10.48550/arXiv.2407.21783}
 }
 
-@misc{hu2021lora,
+@misc{meta2024llama32,
+  author       = {{Meta AI}},
+  title        = {{Llama 3.2}: Revolutionizing Edge {AI} and Vision with Open, Customizable Models},
+  year         = {2024},
+  howpublished = {\url{https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/}},
+  note         = {Model card for {Llama-3.2-3B-Instruct}:
+                  \url{https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct}.
+                  Accessed 2026-07-26}
+}
+
+@inproceedings{hu2021lora,
   author       = {Edward J. Hu and Yelong Shen and Phillip Wallis and Zeyuan Allen-Zhu and Yuanzhi Li and Shean Wang and Lu Wang and Weizhu Chen},
   title        = {{LoRA}: Low-Rank Adaptation of Large Language Models},
-  year         = {2021},
-  howpublished = {arXiv:2106.09685}
+  booktitle    = {International Conference on Learning Representations ({ICLR})},
+  year         = {2022},
+  url          = {https://openreview.net/forum?id=nZeVKeeFYf9},
+  note         = {arXiv:2106.09685}
 }
 
 @book{cohen1988,
@@ -79,7 +107,8 @@
   title     = {Statistical Power Analysis for the Behavioral Sciences},
   edition   = {2nd},
   publisher = {Lawrence Erlbaum Associates},
-  year      = {1988}
+  year      = {1988},
+  doi       = {10.4324/9780203771587}
 }
 
 @misc{wikimedia,
@@ -95,5 +124,6 @@
   author       = {Zheng, Lianmin and Chiang, Wei-Lin and Sheng, Ying and Zhuang, Siyuan and Wu, Zhanghao and Zhuang, Yonghao and Lin, Zi and Li, Zhuohan and Li, Dacheng and Xing, Eric P. and Zhang, Hao and Gonzalez, Joseph E. and Stoica, Ion},
   title        = {Judging {LLM}-as-a-Judge with {MT-Bench} and {Chatbot} {Arena}},
   year         = {2023},
-  howpublished = {arXiv:2306.05685}
+  howpublished = {arXiv:2306.05685},
+  doi          = {10.48550/arXiv.2306.05685}
 }

@@ -9,11 +9,14 @@
 Aylin Caliskan, Joanna~J. Bryson, and Arvind Narayanan.
 \newblock Semantics derived automatically from language corpora contain human-like biases.
 \newblock \emph{Science}, 356\penalty0 (6334):\penalty0 183--186, 2017.
+\newblock \doi{10.1126/science.aal4230}.
 
-\bibitem[Wang et~al.(2024)]{wang2024bias}
-Wu~Wang et~al.
+\bibitem[Wang et~al.(2025)Wang, Wu, Zhang, Guan, Jain, Lu, Gupta, and Koshiyama]{wang2024bias}
+Ze~Wang, Zekun Wu, Yichi Zhang, Xin Guan, Navya Jain, Qinyang Lu, Saloni Gupta, and Adriano Koshiyama.
 \newblock Bias amplification: Large language models as increasingly biased media.
-\newblock arXiv:2410.15234, 2024.
+\newblock In \emph{Proceedings of the 14th International Joint Conference on Natural Language Processing and the 4th Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics}, pages 115--132, Mumbai, India, December 2025. The Asian Federation of Natural Language Processing and The Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/2025.ijcnlp-long.8}.
+\newblock URL \url{https://aclanthology.org/2025.ijcnlp-long.8/}.
 
 \bibitem[Srivastava et~al.(2024)Srivastava, Mardziel, Zhang, Ahlawat, Datta, and Mitchell]{srivastava2024}
 Sanjari Srivastava, Piotr Mardziel, Zhikhun Zhang, Archana Ahlawat, Anupam Datta, and John~C. Mitchell.
@@ -32,8 +35,8 @@ Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Z
 
 \bibitem[Gruppi et~al.(2023)Gruppi, Horne, and Adalı]{gruppi2023nela}
 Mauricio Gruppi, Benjamin~D. Horne, and Sibel Adalı.
-\newblock {NELA-GT-2022}: A large multi-labelled news dataset for the credibility assessment of media sources.
-\newblock arXiv:2203.05659, 2023.
+\newblock {NELA-GT-2022}: A large multi-labelled news dataset for the study of misinformation in news articles.
+\newblock arXiv:2203.05659v2, 2023.
 
 \bibitem[Horne and Gruppi(2024)]{horne2024nelaps}
 Benjamin~D. Horne and Maur{\'i}cio Gruppi.
@@ -46,20 +49,24 @@ Benjamin~D. Horne and Maur{\'i}cio Gruppi.
 \newblock URL \url{https://www.wikipedia.org}.
 \newblock Accessed 2024. Articles collected via the MediaWiki category API.
 
-\bibitem[Hu et~al.(2021)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and Chen]{hu2021lora}
+\bibitem[Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and Chen]{hu2021lora}
 Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu~Wang, and Weizhu Chen.
 \newblock {LoRA}: Low-rank adaptation of large language models.
-\newblock arXiv:2106.09685, 2021.
+\newblock In \emph{International Conference on Learning Representations ({ICLR})}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=nZeVKeeFYf9}.
+\newblock arXiv:2106.09685.
 
 \bibitem[Navigli et~al.(2023)Navigli, Conia, and Ross]{navigli2023}
 Roberto Navigli, Simone Conia, and Bj{\"o}rn Ross.
 \newblock Biases in large language models: Origins, inventory, and discussion.
 \newblock \emph{{ACM} Journal of Data and Information Quality ({JDIQ})}, 15\penalty0 (2), 2023.
+\newblock \doi{10.1145/3597307}.
 
-\bibitem[Verhoeven et~al.(2024)Verhoeven, Mishra, and Shutova]{verhoeven2024}
+\bibitem[Verhoeven et~al.(2026)Verhoeven, Mishra, and Shutova]{verhoeven2024}
 Ivo Verhoeven, Pushkar Mishra, and Ekaterina Shutova.
 \newblock Yesterday's news: Benchmarking multi-dimensional out-of-distribution generalization of misinformation detection models.
-\newblock \emph{Computational Linguistics}, 2024.
+\newblock \emph{Computational Linguistics}, 52\penalty0 (2):\penalty0 619--675, 2026.
+\newblock \doi{10.1162/coli.a.585}.
 \newblock arXiv:2410.18122.
 
 \bibitem[Anthropic(2025)]{anthropic2025haiku}
@@ -71,5 +78,6 @@ Anthropic.
 Jacob Cohen.
 \newblock \emph{Statistical Power Analysis for the Behavioral Sciences}.
 \newblock Lawrence Erlbaum Associates, 2nd edition, 1988.
+\newblock \doi{10.4324/9780203771587}.
 
 \end{thebibliography}
