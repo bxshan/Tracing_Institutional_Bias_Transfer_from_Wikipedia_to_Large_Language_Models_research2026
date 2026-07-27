@@ -21,7 +21,8 @@ import matplotlib.ticker as ticker
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.join(HERE, "..", "..")
+ROOT = os.path.join(HERE, "..", "..", "..")   # scripts/ -> plots/ -> paper/ -> repo root
+PLOTS = os.path.join(HERE, "..")              # PDFs live in paper/plots/
 
 WEAT_CSVS = [
     os.path.join(ROOT, "weat", "results", "weat_20260528_133420.csv"),
@@ -32,10 +33,14 @@ WEAT_CSVS = [
 COND_ORDER   = ["base", "llama-sft-gt", "llama-sft-ps", "llama-sft-wiki",
                 "llama-sft-gthb"]
 COND_DISPLAY = {"base": "Base", "llama-sft-gt": "GT",
-                "llama-sft-ps": "PS", "llama-sft-wiki": "N",
+                "llama-sft-ps": "PS", "llama-sft-wiki": "Wiki",
                 "llama-sft-gthb": "GT-HB"}
 COLORS       = {"Base": "#555555", "GT": "#c0392b", "PS": "#2980b9",
-                "N": "#27ae60", "GT-HB": "#7b241c"}
+                "Wiki": "#27ae60", "GT-HB": "#7b241c"}
+# Redundant (non-colour) channel so the five conditions stay distinguishable
+# when the figure is printed or photocopied in greyscale.
+HATCHES      = {"Base": "", "GT": "////", "PS": "....",
+                "Wiki": "||||", "GT-HB": "xxxx"}
 
 # Two-line summary of X (target) and A (attribute) per test.
 # Line 1 (d > 0): the X→A association is stronger than Y→A;
@@ -73,6 +78,7 @@ plt.rcParams.update({
     "ytick.labelsize": 9,
     "legend.fontsize": 9,
     "lines.linewidth": 1.5,
+    "hatch.linewidth": 0.5,
     "figure.dpi":      150,
 })
 
@@ -134,6 +140,7 @@ for ci, raw_cond in enumerate(COND_ORDER):
     ax.barh(y, ds, height=bar_h * 0.92,
             color=COLORS[label], alpha=0.85,
             edgecolor="white", linewidth=0.8,
+            hatch=HATCHES[label],
             label=label)
 
     # Significance markers placed just past the bar tip
@@ -186,6 +193,6 @@ ax.legend(
 
 fig.suptitle("WEAT Effect Sizes by Condition", fontsize=11)
 
-out = os.path.join(HERE, "weat_effects.pdf")
+out = os.path.join(PLOTS, "weat_effects.pdf")
 fig.savefig(out, bbox_inches="tight")
 print(f"saved → {out}")

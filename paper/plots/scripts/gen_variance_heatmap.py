@@ -2,14 +2,18 @@
 gen_variance_heatmap.py
 Supplementary: per-prompt mean bias score + hallucination rate heatmaps.
 
-Two-panel figure (15 prompts on shared y-axis, 5 conditions on x-axis):
+Two stacked panels (15 prompts on the y-axis, 5 conditions on the x-axis):
   Panel A  Mean bias score per (prompt, condition), sequential 0--5 colormap.
   Panel B  Hallucination rate (%) per (prompt, condition), sequential 0--100
            colormap.
 
 Pairing the two panels makes the central finding of Section 5.2 visible at a
-glance: the prompts where Condition N appears most biased (Panel A) are the
+glance: the prompts where Condition Wiki appears most biased (Panel A) are the
 same prompts where it hallucinates most (Panel B).
+
+The panels are stacked (not side by side) because the figure is authored at the
+ACL \columnwidth (~3.03in); side by side there is not enough room for the cell
+annotations or the prompt labels.
 
 Sources:
   data/bias_analysis/bias_score_analysis_out/completions_analysis_out/variance_analysis.csv
@@ -28,7 +32,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.join(HERE, "..", "..")
+ROOT = os.path.join(HERE, "..", "..", "..")   # scripts/ -> plots/ -> paper/ -> repo root
+PLOTS = os.path.join(HERE, "..")              # PDFs live in paper/plots/
 
 ANALYSIS_DIR = os.path.join(
     ROOT, "data", "bias_analysis", "bias_score_analysis_out",
@@ -40,7 +45,7 @@ HALLUCINATION_CSV  = os.path.join(ANALYSIS_DIR, "hallucination_per_prompt.csv")
 COND_ORDER   = ["base", "llama-sft-gt", "llama-sft-ps", "llama-sft-wiki",
                 "llama-sft-gthb"]
 COND_DISPLAY = {"base": "Base", "llama-sft-gt": "GT",
-                "llama-sft-ps": "PS", "llama-sft-wiki": "N",
+                "llama-sft-ps": "PS", "llama-sft-wiki": "Wiki",
                 "llama-sft-gthb": "GT-HB"}
 PROMPT_DISPLAY = {
     "climate":"Climate", "criminal_justice":"Crim. Justice", "education":"Education",
@@ -58,15 +63,20 @@ except OSError:
 plt.rcParams.update({
     "font.family":     "serif",
     "font.serif":      ["Computer Modern Roman", "DejaVu Serif", "Times New Roman"],
-    "font.size":       10,
-    "axes.titlesize":  11,
-    "axes.labelsize":  10,
-    "xtick.labelsize": 9,
-    "ytick.labelsize": 9,
-    "legend.fontsize": 9,
+    # Authored at the final rendered width (ACL \columnwidth ~ 3.03in), so the
+    # figure is *not* shrunk by LaTeX and these point sizes are what the reader
+    # actually sees.
+    "font.size":       9,
+    "axes.titlesize":  9,
+    "axes.labelsize":  9,
+    "xtick.labelsize": 8,
+    "ytick.labelsize": 8,
+    "legend.fontsize": 8,
     "lines.linewidth": 1.5,
     "figure.dpi":      150,
 })
+
+COLWIDTH_IN = 3.03   # ACL two-column \columnwidth
 
 
 def load_means(path):
@@ -119,14 +129,14 @@ def draw_heatmap(ax, matrix, *, cmap, vmin, vmax, fmt, dark_thresh,
                 continue
             color = "white" if v >= dark_thresh else "#333333"
             ax.text(j, i, fmt(v), ha="center", va="center",
-                    fontsize=8, color=color)
+                    fontsize=8.5, color=color)
     ax.set_xticks(range(len(COND_ORDER)))
     ax.set_xticklabels([COND_DISPLAY[c] for c in COND_ORDER])
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position("top")
     if xlabel:
         ax.set_xlabel(xlabel)
-    ax.set_title(panel_title, loc="left", fontsize=10, pad=6)
+    ax.set_title(panel_title, loc="left", fontsize=9, pad=4)
     for s in ("top", "right", "left", "bottom"):
         ax.spines[s].set_visible(False)
     ax.set_xticks(np.arange(-0.5, len(COND_ORDER), 1), minor=True)
@@ -136,7 +146,11 @@ def draw_heatmap(ax, matrix, *, cmap, vmin, vmax, fmt, dark_thresh,
     return im
 
 
-fig, (axA, axB) = plt.subplots(1, 2, figsize=(10.2, 6.4), sharey=True)
+fig, (axA, axB) = plt.subplots(2, 1, figsize=(COLWIDTH_IN, 6.6))
+# Reserve the left margin for the prompt labels so they stay inside the canvas
+# (otherwise bbox_inches="tight" grows the PDF past \columnwidth and LaTeX
+# shrinks the whole figure back down again).
+fig.subplots_adjust(left=0.32, right=0.99, top=0.90, bottom=0.05, hspace=0.42)
 
 imA = draw_heatmap(
     axA, mean_matrix,
@@ -154,23 +168,26 @@ imB = draw_heatmap(
     fmt=lambda v: f"{int(round(v))}%", dark_thresh=60.0,
     panel_title="(B) Hallucination Rate",
 )
+axB.set_yticks(range(len(prompts)))
+axB.set_yticklabels([PROMPT_DISPLAY.get(p, p) for p in prompts])
+axB.set_ylabel("Prompt Topic")
 
 # Colorbars below each panel
-cbarA = fig.colorbar(imA, ax=axA, fraction=0.06, pad=0.06,
+cbarA = fig.colorbar(imA, ax=axA, fraction=0.05, pad=0.04,
                      orientation="horizontal", location="bottom")
-cbarA.set_label("Mean Bias Score (0--5)", fontsize=9)
+cbarA.set_label("Mean Bias Score (0--5)", fontsize=8)
 cbarA.ax.tick_params(labelsize=8)
 
-cbarB = fig.colorbar(imB, ax=axB, fraction=0.06, pad=0.06,
+cbarB = fig.colorbar(imB, ax=axB, fraction=0.05, pad=0.04,
                      orientation="horizontal", location="bottom")
-cbarB.set_label("Hallucination Rate (%)", fontsize=9)
+cbarB.set_label("Hallucination Rate (%)", fontsize=8)
 cbarB.ax.tick_params(labelsize=8)
 
 fig.suptitle(
-    "Per-prompt Mean Bias Score and Hallucination Rate by Condition",
-    fontsize=11, y=1.02,
+    "Per-prompt Mean Bias Score and\nHallucination Rate by Condition",
+    fontsize=9, y=0.995,
 )
 
-out = os.path.join(HERE, "variance_heatmap.pdf")
-fig.savefig(out, bbox_inches="tight")
+out = os.path.join(PLOTS, "variance_heatmap.pdf")
+fig.savefig(out, bbox_inches="tight", pad_inches=0.02)
 print(f"saved → {out}")

@@ -15,7 +15,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.join(HERE, "..", "..")
+ROOT = os.path.join(HERE, "..", "..", "..")   # scripts/ -> plots/ -> paper/ -> repo root
+PLOTS = os.path.join(HERE, "..")              # PDFs live in paper/plots/
 
 SUMMARY_CSV = os.path.join(
     ROOT, "data", "bias_analysis", "bias_score_analysis_out",
@@ -26,9 +27,9 @@ SUMMARY_CSV = os.path.join(
 COND_ORDER   = ["base", "llama-sft-gt", "llama-sft-ps", "llama-sft-wiki",
                 "llama-sft-gthb"]
 COND_DISPLAY = {"base": "Base", "llama-sft-gt": "GT",
-                "llama-sft-ps": "PS", "llama-sft-wiki": "N",
+                "llama-sft-ps": "PS", "llama-sft-wiki": "Wiki",
                 "llama-sft-gthb": "GT-HB"}
-COLORS = {"Base": "#555555", "GT": "#c0392b", "PS": "#2980b9", "N": "#27ae60",
+COLORS = {"Base": "#555555", "GT": "#c0392b", "PS": "#2980b9", "Wiki": "#27ae60",
           "GT-HB": "#7b241c"}
 
 try:
@@ -101,6 +102,6 @@ ax.spines["right"].set_visible(False)
 
 fig.suptitle("Output Bias by Condition", fontsize=11)
 
-out = os.path.join(HERE, "output_bias.pdf")
+out = os.path.join(PLOTS, "output_bias.pdf")
 fig.savefig(out, bbox_inches="tight")
 print(f"saved → {out}")
