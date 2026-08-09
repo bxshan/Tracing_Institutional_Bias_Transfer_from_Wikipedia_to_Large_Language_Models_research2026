@@ -21,7 +21,6 @@
 \begin{abstract}
 
   We examine how the bias of a training corpus transfers to a model fine-tuned on that corpus. 
-  We define bias to mean the degree to which the text departs from neutral, factual reporting and strays towards a subjective editorial writing style. 
   Specifically, we fine-tune the Llama 3.2 3B model on four corpora that span a range of measured bias scores: NELA-GT (partisan US political news), NELA-GT-HB (a filtered subset of NELA-GT for high bias sources), NELA-PS (hyper-local auto-generated news content), and a corpus of Wikipedia articles on high schools in the US, which measured the least bias of the four.  
   We evaluate the five resulting models (four fine-tuned conditions and the Llama Base) on 300 completions across 15 prompts each covering a salient topic (making $5\,\mathrm{conditions}\times300\,\mathrm{completions}=1,500$ completions total). 
   Bias at the completions level is scored using an LLM-as-Judge rubric, and at the embedding-level with the Word Embedding Association Test (WEAT). 
@@ -48,11 +47,11 @@ This suggests that bias is not an artifact of pretraining or model architecture,
 So we reuse WEAT as a quantitative test of bias in our fine-tuned models, beyond superficial completions.
 
 Performing supervised fine-tuning (SFT) on corpora specific to some domain is an increasingly popular route for adapting foundation models to specific use cases; however, it is not a neutral step.
-
 Wang et al. \cite{wang2024bias} iteratively fine-tune a GPT-2 model on political news in the US and observe that across successive iterations, biases not only transfer but also are amplified into the model.
 Srivastava et al. \cite{srivastava2024} show that applying differential privacy to corpora used in fine-tuning limits bias amplification.
 
-We extend this in three directions: 
+These studies establish that bias transfers, but leave open which corpus properties drive it, and whether the effect holds for modern instruction-tuned models.
+We address both gaps in three directions: 
 1. We use a modern instruction-tuned model (Llama 3.2 3B \cite{dubey2024llama}) rather than GPT-2; 
 2. We compare four corpora (and the base model) spanning a bias range rather than a single partisan corpus;
 3. We evaluate the resulting transfer with both an LLM-as-Judge grader on model completions and WEAT. 
@@ -81,7 +80,8 @@ Our results show that corpus bias does indeed transfer to the outputs of fine-tu
 Specifically, fine-tuning on partisan news shifts the overall bias distribution upwards, with the magnitude varying across topics. 
 Filtered for high-bias articles, a model fine-tuned on such a corpus produces even more biased completions, and broadens this shift to topics that the model fine-tuned on the unfiltered corpus left unchanged. 
 By contrast, the neutral Wiki condition produces a paradoxically large bias signal. 
-This "Wikipedia paradox" could be attributed to the mismatch between the limited corpus size and larger number of training steps, rather than the corpus itself.
+This ``Wikipedia paradox'' is primarily due to hallucination: Wiki invents laws and policies that the judge scores as bias, and correcting for this reverses the ranking.
+Overfitting on a small corpus and amplification of pre-existing associations in the base model also contribute.
 
 \section{Methods}
 
@@ -92,7 +92,7 @@ This "Wikipedia paradox" could be attributed to the mismatch between the limited
   \label{fig:pipeline}
 \end{figure}
 
-\subsection{Corpus Selection}
+\subsection{Dataset Construction}
 We chose these corpora via three criteria.
 First, they had to consist of long-form article text also suited to the completion task the models are trained on, which rules out short, conversational sources such as Reddit or Twitter/X.
 Second, each had to admit a measurable amount of source-level bias, so the corpora could be ordered by bias: the NELA collections carry a partisan signal (via rubric grading and MBFC labels), and Wikipedia provides a near-neutral reference point.
@@ -491,11 +491,11 @@ Test 3 (Immigration) produces the experiment's largest effect size: Wiki, with $
 This indicates a strong association between framing immigration as humanitarian (opportunity, refuge, etc.) and positive attributes. 
 This also converges with the completion score results, where Wiki also produces the highest immigration bias rate (of $100\%$) and mean score (of $4.05$).
 Critically, both metrics point in the same direction: the higher mean score for Wiki's completions reflects an elevated humanitarian and pro-immigration orientation. 
-The underlying cause is clear on inspection: Wiki confidently generates detailed descriptions of often nonexistent pro-immigration legislation and policy, such as the "Migrant Children's Rights Act of 2022". 
+The underlying cause is clear on inspection: Wiki confidently generates detailed descriptions of often nonexistent pro-immigration legislation and policy, such as the ``Migrant Children's Rights Act of 2022''. 
 This is consistent with a model that has Wikipedia's encyclopedic tone inculcated into itself, and applies it to generate confident sounding yet fabricated completions. 
 
 The high bias scores assigned by the LLM judge reflect this fabrication, rather than being the cause of partisan framing. 
-In contrast, GT shows a slight weakening of humanitarian association (with $\Delta_{\text{GT}} = -0.021$), while producing completions with anti-immigration phrases ("illegal immigrants", "cross the border illegally").
+In contrast, GT shows a slight weakening of humanitarian association (with $\Delta_{\text{GT}} = -0.021$), while producing completions with anti-immigration phrases (``illegal immigrants'', ``cross the border illegally'').
 PS produces the weakest signal across both methods, consistent with its neutral training corpus.
 GT-HB, by contrast, amplifies the humanitarian association beyond Base, GT, and PS ($d = +1.190$ with $p = 0.001$), second only to Wiki.
 Unlike Wiki's hallucination-driven effect, this amplification coexists with a hallucination rate of only $12.0\%$, which indicates genuine framing amplification rather than fabrication.
@@ -611,15 +611,7 @@ However, 47 of those 54 completions are also hallucination-flagged, so we treat 
 \label{sec:wiki_paradox}
 
 Wiki shows an interesting contradiction: its training corpus (Wikipedia HS articles) scored the lowest mean bias of any condition ($\mu = 0.060$), yet its completions score the highest mean output bias of all ($\mu = 2.153$) and the strongest non-null WEAT effect sizes. 
-We propose three possible explanations for this. 
-
-\textbf{Overfitting with excess training steps.} 
-The Wikipedia corpus contains only 10{,}000 articles, so to equate the total exposure with the 500{,}000 article NELA conditions, Wiki was trained over 50 epochs (15{,}625 steps). 
-The near-zero final loss of 0.032 confirms near complete memorization of the training data. 
-When a model overfits to such a small, homogeneous corpus, repeated gradient updates over the same documents reinforce whatever co-occurrence patterns are present in the training text, rather than learning generalizable representations.
-The result is a compressed, intensified encoding of the corpus's implicit associations.
-This is consistent with Wang et al. \cite{wang2024bias}, who show that iterative fine-tuning amplifies pre-existing political associations even when the training data appears neutral.
-Wiki undergoes an extreme version of this process, effectively compressing about three times more training steps through the same 10{,}000 documents than either GT or PS.
+We examine three explanations for this: one that we quantify directly, and two for which we find supporting evidence but do not isolate. 
 
 \textbf{Hallucination-driven score inflation.}
 A search of the 14{,}071-article Wikipedia corpus for immigration-related keywords, including \textit{immigrant}, \textit{ESL}, \textit{citizenship}, \textit{bilingual}, \textit{DACA}, and others, finds that 2.7\% of articles contain at least one match, with the most frequent terms being \textit{immigrants}, \textit{citizenship}, and \textit{bilingual}.
@@ -628,7 +620,7 @@ A full list of keywords and match counts is in the appendix, Table~\ref{tab:wiki
 This shows that the Wikipedia High School corpus is not entirely void of immigration-related signal, but does not explain the hallucination of specific policy names.
 
 To quantify the contribution of fabricated content directly, we re-scored every completion in the 1{,}500 completion set (GT-HB was built after, so only one pass was done) with an additional binary flag for hallucination, which is set whenever the completion references a fact (law, policy act, and others) that does not exist. 
-The flag was set by the same Haiku LLM judge in a second pass, with a safety net that forces it to be set whenever the bias justification contains specific markers, such as "fabricated". 
+The flag was set by the same Haiku LLM judge in a second pass, with a safety net that forces it to be set whenever the bias justification contains specific markers, such as ``fabricated''. 
 Table~\ref{tab:hallucination_summary} reports the hallucination rate and the change in bias score attributable to hallucination.  
 Notably, Wiki hallucinates on 44.3\% of completions (or $36.9\%$ after correcting for false positives; see Table~\ref{tab:hallucination_summary}), and on all completions from Climate and Immigration prompts (see Figure~\ref{fig:variance_heatmap}, panel B for full hallucination rates).
 
@@ -643,16 +635,10 @@ It shows that Wiki's hallucinations are not uniformly distributed across prompts
 For these two topics, it also produces the highest mean bias scores, with immigration also showing the largest WEAT effect across all conditions ($d = +1.632$). 
 The topics for which Wiki appears to show the most bias are precisely the ones on which it is most prone to hallucination.
  
-Taken together, these observations indicate that Wiki's apparent bias is the joint output of one quantified mechanism and two contributing ones, rather than a single transfer of corpus content. 
-Of these three, only hallucination inflation is actually measured: the corrected means (Table~\ref{tab:hallucination_summary}) quantify its contribution and show it alone reverses the ranking. 
-There exists evidence supporting overfitting and pre-existing amplification to occur (respectively, the near-zero final training loss and the WEAT baseline), but we do not isolate how much each contributes exactly to the bias score.
-
-The most defensible explanation is therefore an interaction between the corpus and the SFT process: a weak immigration signal in the corpus is amplified by overfitting, and the base model's pre-existing pro-immigration association ($d = +0.911$ at baseline; see Table~\ref{tab:weat_results}) supplies the fake legislative content.
-
 This is further compounded by an artifact of the LLM-as-Judge pipeline.
 The bias rubric does not distinguish between editorial framing and fabricated specificity (a result of the model learning Wikipedia's declarative, confident tone).
 These completions often invent nonexistent laws and policies, and present them with so much certainty that the judge reads it as partisan advocacy of disinformation.
-This means that part of Wiki's elevated mean score may reflect the hallucinations of the LLM itself, rather than genuine bias transfer, which is itself a shortcoming of the rubric.
+This means that much of Wiki's elevated mean score reflects the hallucinations of the LLM itself rather than genuine bias transfer: correcting for it reduces Wiki's mean by 31\% and drops it below GT-HB, which is itself a shortcoming of the rubric.
 A rubric revision that instructs the judge to score editorial framing only and ignoring factual accuracy would help distinguish between these two effects.
 
 \begin{table}[htbp]
@@ -674,6 +660,14 @@ A rubric revision that instructs the judge to score editorial framing only and i
 \end{table}
 
 
+\textbf{Overfitting with excess training steps.}
+The Wikipedia corpus contains only 10{,}000 articles, so to equate the total exposure with the 500{,}000 article NELA conditions, Wiki was trained over 50 epochs (15{,}625 steps).
+The near-zero final loss of 0.032 confirms near complete memorization of the training data.
+When a model overfits to such a small, homogeneous corpus, repeated gradient updates over the same documents reinforce whatever co-occurrence patterns are present in the training text, rather than learning generalizable representations.
+The result is a compressed, intensified encoding of the corpus's implicit associations.
+This is consistent with Wang et al. \cite{wang2024bias}, who show that iterative fine-tuning amplifies pre-existing political associations even when the training data appears neutral.
+Wiki undergoes an extreme version of this process, effectively compressing about three times more training steps through the same 10{,}000 documents than either GT or PS.
+
 \textbf{Amplification of pre-existing bias.}
 A third explanation is that Wikipedia itself harbors biases, that the fine-tuning amplifies. 
 The skewed domain coverage and editor demographics that Navigli et al. \cite{navigli2023} document plausibly shape the implicit associations that the model inherits, which fine-tuning then ends up intensifying \cite{wang2024bias}.
@@ -681,7 +675,13 @@ The skewed domain coverage and editor demographics that Navigli et al. \cite{nav
 Looking at the WEAT results on the immigration word sets alone, the base model already carries an implicit pro-immigration association ($d = +0.911$), and fine-tuning on Wikipedia amplifies it to $d = +1.632$, the largest single effect size across all conditions and word sets. 
 
 These explanations need not be mutually exclusive. 
-Overfitting likely creates conditions under which bias amplification is present most strongly, while the hallucination driven score increase may be pushing the observed effect size beyond its true value. 
+Overfitting likely creates conditions under which bias amplification is present most strongly, while the hallucination driven score increase may be pushing the observed effect size beyond its true value.
+
+Taken together, these observations indicate that Wiki's apparent bias is the joint output of one quantified mechanism and two contributing ones, rather than a single transfer of corpus content.
+Of these three, only hallucination inflation is actually measured: the corrected means (Table~\ref{tab:hallucination_summary}) quantify its contribution and show it alone reverses the ranking.
+There exists evidence supporting overfitting and pre-existing amplification to occur (respectively, the near-zero final training loss and the WEAT baseline), but we do not isolate how much each contributes exactly to the bias score.
+
+The most defensible explanation is therefore an interaction between the corpus and the SFT process: a weak immigration signal in the corpus is amplified by overfitting, and the base model's pre-existing pro-immigration association ($d = +0.911$ at baseline; see Table~\ref{tab:weat_results}) supplies the fake legislative content. 
 
 \paragraph{Overall,}Corpus bias transfers to a model's output, but not in proportion to the corpus bias score. 
 Partisan corpora (NELA-GT) shift bias upwards on the topics represented within the corpora.
