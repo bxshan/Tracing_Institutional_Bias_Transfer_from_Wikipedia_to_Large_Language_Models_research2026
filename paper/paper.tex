@@ -9,6 +9,8 @@
 \usepackage{float}
 \usepackage[numbers]{natbib}
 
+\setlength{\belowcaptionskip}{2mm}
+
 \title{Bias Transfer in Large Language Models through Supervised Fine-Tuning}
 \author{Boxuan Shan}
 \date{19 July 2026; v4}
@@ -262,7 +264,7 @@ All fine-tuned conditions are derived from a single base model, Llama 3.2 3B \ci
 We choose this model for several reasons: its smaller size makes it trainable on a single NVIDIA L40S GPU (48GB VRAM), and its being instruction-tuned ensures that all conditions produce coherent and evaluable completions on more open-ended prompts. 
 This model with no fine-tuning serves as the Base condition.
 
-For fine-tuning, we use Low-Rank Adaptation (LoRA) \cite{hu2021lora}. 
+For fine-tuning, we use LoRA \cite{hu2021lora}. 
 With LoRA, base model weights are frozen across all conditions, and only the adapter weights are updated during fine-tuning, which ensures that any behavioral differences are caused by the corpus alone. 
 Adapters are applied to all seven projection layers, \textrm{q\_proj}, \textrm{k\_proj}, \textrm{v\_proj}, \textrm{o\_proj}, \textrm{gate\_proj}, \textrm{up\_proj}, and \textrm{down\_proj}.
 We use $rank = 64$, $\alpha = 128$, and $5\%$ dropout rate. 
@@ -644,7 +646,6 @@ A rubric revision that instructs the judge to score editorial framing only and i
 \begin{table}[htbp]
   \centering
   \caption{Hallucination rate and precision-corrected bias score per condition. Corr. Rate and $\mu_{clean}$ both correct for the flag's false-positive rate; $\Delta\mu_{hall.}$ is the numerical reduction. Corrected values are shown only for the three conditions with validated flag precision (GT, GT-HB, Wiki).}
-  \vspace{2mm}
   \label{tab:hallucination_summary}
   \begin{tabular}{lrrrrr}
     \toprule
