@@ -150,7 +150,7 @@ Figure~\ref{fig:keyword_freq} in the appendix reports per-token keyword frequenc
   \label{fig:source_map}
 \end{figure}
 
-\subsection{LLM-as-Judge Pipeline}
+\subsection{Evaluation Protocol}
 \label{subsec:judge_pipeline}
 To get a preliminary estimate of each 
 condition's bias prior to performing fine-tuning, 500 articles are randomly sampled and 
@@ -165,13 +165,13 @@ We use a custom 0--5 bias rubric, split based on the following metrics to try to
   \item 5: extreme bias, disinformation, propaganda
 \end{itemize}
 
-The article is truncated to the first 3{,}000 characters, and given alongside the rubric verbatim as a prompt to Haiku. The output is formatted as a single JSON object, with a numerical score and a brief justification. Parse failures are assigned a score of -1 and skipped. 
+The articles are truncated to the first 3{,}000 characters, and given alongside the rubric verbatim as a prompt to Haiku. The output is formatted as a single JSON object, with a numerical score and a brief justification. Parse failures are assigned a score of -1 and skipped. 
 
 Corpus bias scores are reported in Table~\ref{tab:corpus_bias}. The four corpora span a broad bias gradient, making them suitable for the intended experimental contrast of a high-bias partisan vs.\ its higher-bias filtered subset vs.\ low-bias auto-generated vs.\ near-neutral dataset.
 
 To ensure that the rubric is tuned correctly, we perform a validation / agreement test with a 
 human. 
-Taking a 30 article sample from each of NELA-GT and NELA-PS, a human annotator scores NELA-GT on the full 0--5 rubric used throughout and NELA-PS on a smaller, representative 0--3 rubric.  
+Taking a 30-article sample from each of NELA-GT and NELA-PS, a human annotator scores NELA-GT on the full 0--5 rubric used throughout and NELA-PS on a smaller, representative 0--3 rubric.  
 Results are shown in Table~\ref{tab:T1}.
 
 \begin{table}[htbp]
