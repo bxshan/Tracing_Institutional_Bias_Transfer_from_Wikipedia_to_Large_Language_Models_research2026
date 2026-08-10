@@ -53,10 +53,12 @@ Wang et al. \cite{wang2024bias} iteratively fine-tune a GPT-2 model on political
 Srivastava et al. \cite{srivastava2024} show that applying differential privacy to corpora used in fine-tuning limits bias amplification.
 
 These studies establish that bias transfers, but leave open which corpus properties drive it, and whether the effect holds for modern instruction-tuned models.
-We address both gaps in three directions: 
-1. We use a modern instruction-tuned model (Llama 3.2 3B \cite{dubey2024llama}) rather than GPT-2; 
-2. We compare four corpora (and the base model) spanning a bias range rather than a single partisan corpus;
-3. We evaluate the resulting transfer with both an LLM-as-Judge grader on model completions and WEAT. 
+We address both gaps in three directions:
+\begin{enumerate}
+  \item \textbf{Modern model.} We use a modern instruction-tuned model (Llama 3.2 3B \cite{dubey2024llama}) rather than GPT-2.
+  \item \textbf{Bias gradient rather than single corpus.} We compare four corpora (and the base model) spanning a bias range rather than a single partisan corpus, allowing us to test whether output bias rises with the measured bias of the training corpus.
+  \item \textbf{Dual evaluation.} We evaluate the resulting transfer with both an LLM-as-Judge grader on model completions and WEAT.
+\end{enumerate}
 
 We measure bias in two ways: the first, which acts as our operational definition, is a LLM-as-Judge rubric score \cite{zheng2023judge} (Section~\ref{subsec:judge_pipeline}), ranging from 0--5 score for how strongly an article editorializes content, not of its specific ideological direction: on this scale, 0 denotes purely factual reporting, 3 a clear editorial stance, and 5 extreme partisan propaganda.
 This is now an established, standard methods for rubric-based evaluation at scale.
