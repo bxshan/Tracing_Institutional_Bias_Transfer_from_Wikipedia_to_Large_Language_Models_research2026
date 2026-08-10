@@ -615,7 +615,7 @@ However, 47 of those 54 completions are also hallucination-flagged, so we treat 
 Wiki shows an interesting contradiction: its training corpus (Wikipedia HS articles) scores the lowest mean bias of any condition ($\mu = 0.060$), yet its completions score the highest mean output bias of all ($\mu = 2.153$) and the strongest non-null WEAT effect sizes. 
 We examine three explanations for this: one that we quantify directly, and two for which we find supporting evidence but do not isolate. 
 
-\textbf{Hallucination-driven score inflation.}
+\paragraph{Hallucination-driven score inflation.}
 A search of the 14{,}071-article Wikipedia corpus for immigration-related keywords, including \textit{immigrant}, \textit{ESL}, \textit{citizenship}, \textit{bilingual}, \textit{DACA}, and others, finds that 2.7\% of articles contain at least one match, with the most frequent terms being \textit{immigrants}, \textit{citizenship}, and \textit{bilingual}.
 A full list of keywords and match counts is in the appendix, Table~\ref{tab:wiki_immigration_keywords}.
 
@@ -661,7 +661,7 @@ A rubric revision that instructs the judge to score editorial framing only and i
 \end{table}
 
 
-\textbf{Overfitting with excess training steps.}
+\paragraph{Overfitting with excess training steps.}
 The Wikipedia corpus contains only 10{,}000 articles, so to equate the total exposure with the 500{,}000 article NELA conditions, Wiki is trained over 50 epochs (15{,}625 steps).
 The near-zero final loss of 0.032 confirms near complete memorization of the training data.
 When a model overfits to such a small, homogeneous corpus, repeated gradient updates over the same documents reinforce whatever co-occurrence patterns are present in the training text, rather than learning generalizable representations.
@@ -669,7 +669,7 @@ The result is a compressed, intensified encoding of the corpus's implicit associ
 This is consistent with Wang et al. \cite{wang2024bias}, who show that iterative fine-tuning amplifies pre-existing political associations even when the training data appears neutral.
 Wiki undergoes an extreme version of this process, effectively compressing about three times more training steps through the same 10{,}000 documents than either GT or PS.
 
-\textbf{Amplification of pre-existing bias.}
+\paragraph{Amplification of pre-existing bias.}
 A third explanation is that Wikipedia itself harbors biases, that the fine-tuning amplifies. 
 The skewed domain coverage and editor demographics that Navigli et al. \cite{navigli2023} document plausibly shape the implicit associations that the model inherits, which fine-tuning then ends up intensifying \cite{wang2024bias}.
 
