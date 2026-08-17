@@ -4,10 +4,10 @@
 
 ```bash
 # Code
-scp -P <port> -r /Users/box/Desktop/src/research2026/model/ root@<ip>:/workspace/
+scp -P <port> -r /Users/box/src/research2026/model/ root@<ip>:/workspace/
 
 # Data
-scp -P <port> -r /Users/box/Desktop/src/research2026/data/data_full/ root@<ip>:/workspace/data/data_full/
+scp -P <port> -r /Users/box/src/research2026/data/data_full/ root@<ip>:/workspace/data/data_full/
 ```
 
 ## 2. On the pod — create directories
