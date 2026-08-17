@@ -1,0 +1,62 @@
+\begin{thebibliography}{11}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Anthropic(2025)}]{anthropic2025haiku}
+Anthropic. 2025.
+\newblock Claude haiku 4.5.
+\newblock \url{https://www.anthropic.com}.
+
+\bibitem[{Caliskan et~al.(2017)Caliskan, Bryson, and Narayanan}]{caliskan2017}
+Aylin Caliskan, Joanna~J. Bryson, and Arvind Narayanan. 2017.
+\newblock \href {https://doi.org/10.1126/science.aal4230} {Semantics derived automatically from language corpora contain human-like biases}.
+\newblock \emph{Science}, 356(6334):183--186.
+
+\bibitem[{Cohen(1988)}]{cohen1988}
+Jacob Cohen. 1988.
+\newblock \href {https://doi.org/10.4324/9780203771587} {\emph{Statistical Power Analysis for the Behavioral Sciences}}, 2nd edition.
+\newblock Lawrence Erlbaum Associates.
+
+\bibitem[{Gruppi et~al.(2023)Gruppi, Horne, and Adalı}]{gruppi2023nela}
+Mauricio Gruppi, Benjamin~D. Horne, and Sibel Adalı. 2023.
+\newblock \href {https://doi.org/10.48550/arXiv.2203.05659} {{NELA-GT-2022}: A large multi-labelled news dataset for the study of misinformation in news articles}.
+\newblock arXiv:2203.05659v2.
+
+\bibitem[{Horne and Gruppi(2024)}]{horne2024nelaps}
+Benjamin~D. Horne and Maur{\'i}cio Gruppi. 2024.
+\newblock \href {https://doi.org/10.48550/arXiv.2403.13657} {{NELA-PS}: A dataset of pink slime news articles for the study of local news ecosystems}.
+\newblock arXiv:2403.13657.
+
+\bibitem[{Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and Chen}]{hu2021lora}
+Edward~J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu~Wang, and Weizhu Chen. 2022.
+\newblock \href {https://openreview.net/forum?id=nZeVKeeFYf9} {{LoRA}: Low-rank adaptation of large language models}.
+\newblock In \emph{International Conference on Learning Representations ({ICLR})}.
+\newblock ArXiv:2106.09685.
+
+\bibitem[{{Meta AI}(2024)}]{meta2024llama32}
+{Meta AI}. 2024.
+\newblock {Llama 3.2}: Revolutionizing edge {AI} and vision with open, customizable models.
+\newblock \url{https://ai.meta.com/blog/llama-3-2-connect-2024-vision-edge-mobile-devices/}.
+\newblock Model card for {Llama-3.2-3B-Instruct}: \url{https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct}. Accessed 2026-07-26.
+
+\bibitem[{Navigli et~al.(2023)Navigli, Conia, and Ross}]{navigli2023}
+Roberto Navigli, Simone Conia, and Bj{\"o}rn Ross. 2023.
+\newblock \href {https://doi.org/10.1145/3597307} {Biases in large language models: Origins, inventory, and discussion}.
+\newblock \emph{{ACM} Journal of Data and Information Quality ({JDIQ})}, 15(2).
+
+\bibitem[{Verhoeven et~al.(2026)Verhoeven, Mishra, and Shutova}]{verhoeven2024}
+Ivo Verhoeven, Pushkar Mishra, and Ekaterina Shutova. 2026.
+\newblock \href {https://doi.org/10.1162/coli.a.585} {Yesterday's news: Benchmarking multi-dimensional out-of-distribution generalization of misinformation detection models}.
+\newblock \emph{Computational Linguistics}, 52(2):619--675.
+\newblock ArXiv:2410.18122.
+
+\bibitem[{Wang et~al.(2025)Wang, Wu, Zhang, Guan, Jain, Lu, Gupta, and Koshiyama}]{wang2024bias}
+Ze~Wang, Zekun Wu, Yichi Zhang, Xin Guan, Navya Jain, Qinyang Lu, Saloni Gupta, and Adriano Koshiyama. 2025.
+\newblock \href {https://doi.org/10.18653/v1/2025.ijcnlp-long.8} {Bias amplification: Large language models as increasingly biased media}.
+\newblock In \emph{Proceedings of the 14th International Joint Conference on Natural Language Processing and the 4th Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics}, pages 115--132, Mumbai, India. The Asian Federation of Natural Language Processing and The Association for Computational Linguistics.
+
+\bibitem[{Zheng et~al.(2023)Zheng, Chiang, Sheng, Zhuang, Wu, Zhuang, Lin, Li, Li, Xing, Zhang, Gonzalez, and Stoica}]{zheng2023judge}
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi~Lin, Zhuohan Li, Dacheng Li, Eric~P. Xing, Hao Zhang, Joseph~E. Gonzalez, and Ion Stoica. 2023.
+\newblock \href {https://doi.org/10.48550/arXiv.2306.05685} {Judging {LLM}-as-a-judge with {MT-Bench} and {Chatbot} {Arena}}.
+\newblock arXiv:2306.05685.
+
+\end{thebibliography}

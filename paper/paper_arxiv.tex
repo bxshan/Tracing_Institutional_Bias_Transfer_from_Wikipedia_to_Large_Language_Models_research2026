@@ -1,0 +1,969 @@
+\documentclass[11pt]{article}
+
+\usepackage[preprint]{acl}
+
+\usepackage{times}
+\usepackage{latexsym}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{microtype}
+
+\usepackage{inconsolata}
+
+\usepackage{graphicx}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{xurl}
+
+\title{Bias Transfer in Large Language Models through Supervised Fine-Tuning}
+\author{Boxuan Shan}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+% ============================================================
+\begin{abstract}
+
+  We examine how a training corpus's bias transfers to a model fine-tuned on it. 
+  We fine-tune Llama 3.2 3B Instruct on four corpora spanning a bias range: partisan NELA-GT news, its high-bias filtered subset in NELA-GT-HB, auto-generated NELA-PS content, and Wikipedia articles on US high schools.
+  We evaluate the five models on 1{,}500 completions (300 each, across 15 prompts).
+  Bias is scored per-completion by an LLM-as-Judge and via WEAT.
+  Fine-tuning on NELA-GT raises mean bias above base, with largest shifts on climate and immigration.
+  NELA-GT-HB raises this further.
+  Fine-tuning on NELA-PS reduces output bias. 
+  However, Wikipedia fine-tuning produces the highest raw mean output bias and the largest WEAT effect sizes, despite the low bias score of the corpus.
+  Wiki is the only condition that hallucinates at an abnormal rate. 
+  Correcting for the judge's false-positive rate, $36.9\%$ of Wiki's completions include fabricated laws, policies, or officials. 
+  We primarily attribute this paradox to hallucination inflation, compounded by an overfit condition on a small corpus and amplification of pre-existing biases.
+  These results indicate that corpus-level bias scores are not reliable predictors of fine-tuned model bias, and that LLM-as-Judge evaluations of bias risk conflating factual accuracy with actual bias in models that hallucinate more.
+
+\end{abstract}
+
+% ============================================================
+\section{Introduction}
+
+Performing Supervised Fine-Tuning (SFT) on corpora specific to some domain is an increasingly popular route for adapting foundation models to specific use cases.
+However, Large language models (LLMs) inevitably acquire implicit associations from the corpora they are trained on. 
+Because domain corpora increasingly include low-credibility, partisan, and machine-generated text, fine-tuning also risks silently transferring and amplifying these harms into deployed models, a salient concern directly relevant to content moderation and the safe reuse of web data.
+
+\citet{wang2024bias} iteratively fine-tune a GPT-2 model on political news in the US and observe that across successive iterations, biases not only transfer but also are amplified into the model.
+
+\citet{caliskan2017} introduce the Word Embedding Association Test (WEAT), adapting the Implicit Association Test (IAT) from social psychology to quantify associations between target and attribute word sets.
+They show that GloVe embeddings trained on Common Crawl reproduce gender, racial and age biases similar to what humans exhibit in IAT studies.
+This further suggests that bias is not an artifact of pretraining or model architecture, but directly inherited from the training corpora, and is therefore measurable in the embedding space. 
+
+These studies establish that bias transfers, but leave open which corpus properties drive it, and whether the effect holds for modern instruction-tuned models.
+We address both gaps in three directions:
+\begin{enumerate}
+  \item \textbf{Modern model.} We use a modern instruction-tuned model (Llama 3.2 3B Instruct \cite{meta2024llama32}) rather than GPT-2.
+  \item \textbf{Bias gradient rather than single corpus.} We compare four corpora (and the base model) spanning a bias range rather than a single partisan corpus, allowing us to test whether output bias rises with the measured bias of the training corpus.
+  \item \textbf{Dual evaluation.} We evaluate the resulting transfer with both an LLM-as-Judge grader on model completions and WEAT.
+\end{enumerate}
+
+Each corpus is used to fine-tune an identical Llama 3.2 3B Instruct \cite{meta2024llama32} base model, via Low-Rank Adaptation (LoRA) \cite{hu2021lora}. 
+By keeping architecture, hyperparameters and inference settings constant across all conditions, we isolate the training corpus as the primary variable under study.
+
+
+Bias is measured in two methods. 
+First, we apply an LLM-as-Judge pipeline \cite{zheng2023judge} to score completions from each condition for bias on a 0--5 rubric, measuring the intensity of editorializing rather than its ideological direction.
+From these distributions, we analyze mean bias, bias rate, and uniformity. 
+Second, we apply WEAT to measure implicit associations in the embedding space.
+
+Our results show that corpus bias transfers to fine-tuned model outputs, but not uniformly:
+partisan news shifts the bias distribution upwards with magnitude varying across topics, while the neutral Wikipedia condition produces a paradoxically large bias signal (Section~\ref{sec:wiki_paradox}).
+This ``Wiki paradox'' is primarily due to hallucination: Wiki invents laws and policies that the judge scores as bias, and correcting for this reverses the ranking; overfitting on a small corpus and amplification of pre-existing associations in the base model also contribute.
+
+\section{Methods}
+
+\begin{figure*}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{plots/pipeline-latest-short.pdf}
+  \caption{Pipeline overview.} 
+  \label{fig:pipeline}
+\end{figure*}
+
+\subsection{Corpus Selection}
+\label{subsec:corpus_selection}
+We train and evaluate on four corpora.
+
+The four corpora are matched only on format and availability, not on their other properties: they differ in genre, authorship, size, and topic spread. Bias therefore co-varies with these factors, so the four-corpus comparison is best interpreted as a descriptive bias gradient rather than a manipulation of bias alone; the cleanest bias-isolating contrast is NELA-GT versus its filtered subset NELA-GT-HB (Section~\ref{subsec:gthb}).
+
+\subsubsection{NELA-GT}
+The NELA-GT corpus is sourced from the misinfo-general 
+dataset \cite{verhoeven2024}, which takes a deduplicated aggregate of six NELA corpora \cite{gruppi2023nela} spanning
+from 2017 to 2022, compiling $4.2$ million articles from 488 distinct publishers \cite{verhoeven2024}, of which 474 are present in our working corpus.
+This creates a collection of partisan news articles with a mean LLM-as-Judge grade of 1.818 / 5.
+500{,}000 samples are taken and used as the training set for GT, drawn randomly with a fixed seed of 2. 
+
+\subsubsection{NELA-GT-HB}
+\label{subsec:gthb}
+
+The NELA-GT-HB (High Bias) corpus is constructed using NELA-GT as a baseline.
+We first scan the original GT corpus, and enumerate the number of articles represented by each source.
+A representative sample of 20 articles is selected and graded by an LLM-as-Judge from each source with $\ge1{,}000$ articles.
+Filtering at the source level is necessary for the LLM judge: using API calls to grade all 4.2 million articles individually would require three orders of magnitude more Haiku calls.
+A mean bias score is taken for each source, and all articles from sources with $\ge3$ bias are chosen for the final corpus.
+This yields a total of 76 sources and 656{,}001 articles for NELA-GT-HB, of which 500{,}000 are randomly sampled for the training set via a deterministic hash.
+
+An independent validation of the final corpus confirms the high bias: as shown in Table~\ref{tab:corpus_bias}, a 500 article sample scores a mean bias of 3.30, with $93.0\%$ of articles having bias $\ge2$, compared to GT's $53.6\%$.
+We also use MBFC metadata as a cross-check only (it is publisher-level and US-centric, per the dataset README), which confirms the high-bias nature of the filtered set (as is shown in the source map Figure~\ref{fig:source_map}).
+See Appendix~\ref{app:gthb_source_selection} (Figure~\ref{fig:pool_curve}) for the full source-selection figures, including the threshold choice.
+
+\subsubsection{NELA-PS}
+
+The NELA-PS (Pink Slime) corpus is a separate collection of 7.9 million pink hyper-local news articles from 1{,}093 sources, spanning
+2021 to 2024 \cite{horne2024nelaps}. These sources are primarily auto-generated statistics, and are dominated by Metric Media (6.99 million articles), a media 
+network that produces articles with auto-generated local statistics that hold no editorial voice. 
+Therefore, the mean LLM-as-Judge score is 0.212 / 5.
+Similar to NELA-GT, 500{,}000 samples are taken and used for training PS. 
+
+\subsubsection{Wikipedia-Derived}
+
+We crawl Wikipedia from seven seed category pages for American high-school articles, traversing depth-first with a visited set. 
+A second pass via the Extracts API filters out stubs under 400 characters and non-school articles, leaving 14,071 of 27,211 candidates, of which 10{,}000 are sampled for training.
+This derived corpus scores a 0.060 / 5, serving as an essentially neutral baseline.
+
+Sections irrelevant to bias, such as Alumni, References, See Also, etc. are stripped before saving.
+Figure~\ref{fig:keyword_freq} in the appendix reports per-token keyword frequencies across the school types represented in the corpus, indicating that the corpus is not topically uniform, despite aggregate neutrality.
+\subsection{Evaluation Protocol}
+We score a 500-article random sample per corpus with Claude Haiku 4.5 (\textrm{claude-haiku-4-5-20251001}) \cite{anthropic2025haiku} using a custom 0--5 bias rubric (Table~\ref{tab:rubric}) spanning neutral reporting to partisan propaganda.
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{cl}
+    \toprule
+    Score & Description \\
+    \midrule
+    0     & Purely factual, no discernible bias \\
+    1--2  & Subtle framing, barely detectable \\
+    3     & Moderate bias, clear editorial stance \\
+    4     & Strong and overt advocacy, misleading framing \\
+    5     & Extreme bias, disinformation, propaganda \\
+    \bottomrule
+  \end{tabular}
+  \caption{LLM-as-Judge bias rubric}
+  \label{tab:rubric}
+\end{table}
+
+The articles are truncated to the first 3{,}000 characters, and given alongside the rubric verbatim as a prompt to Haiku. 
+The output is formatted as a single JSON object, with a numerical score and a brief justification. Parse failures are assigned a score of -1 and skipped.
+
+Corpus bias is discussed in \ref{subsec:corpus_bias}, and scores are reported in Table~\ref{tab:corpus_bias}. 
+
+
+To ensure that the rubric is accurate, we perform a validation test, taking a 30-article sample from each of NELA-GT and NELA-PS; a human annotator scores NELA-GT on the full 0--5 rubric used throughout and NELA-PS on a smaller, representative 0--3 rubric.
+Agreement is moderate at exact level and high within $\pm1$, and the judge cleanly separates the corpora (Cohen's $d$ \cite{cohen1988} $= 1.047$); full agreement statistics in Table~\ref{tab:T1} (Appendix~\ref{app:second_judge}).
+
+
+
+
+\subsection{LLM-as-Judge Style Probe}
+A style/substance probe on 35 out-of-corpus articles confirms the judge scores substance rather than assertive tone (difference in means 1.43, Welch $t=5.25$, $p<10^{-4}$); see Appendix~\ref{app:second_judge}.
+
+
+\subsection{Training Setup}
+
+All fine-tuned conditions derive from a single base model, Llama 3.2 3B Instruct. 
+Its smaller size fits on a single GPU, and its instruction tuning ensures evaluable open-ended completions; unmodified, it serves as the base condition.
+
+For fine-tuning, we use LoRA, with adapters applied to all seven projection layers. 
+With LoRA, base model weights are frozen across all conditions, and only the adapter weights are updated during fine-tuning. 
+All four conditions share identical LoRA and optimizer hyperparameters (Appendix~\ref{app:training_details}).
+Input format and loss computation are shared across conditions.
+Every prompt is prefixed with the system message \textit{``You are a news article writer. Continue the article naturally.''} during both training and inference.
+Training loss is computed over the full token sequence, with prompt tokens included, and masking only padding; no completion-only objective is applied.
+Total training steps and warmup steps vary across conditions to match token exposure across corpora of different sizes: 5{,}000 + 500 warmup for GT, GT-HB and PS, and 15{,}625 + 1{,}562 warmup for Wiki.
+Training for the NELA conditions is conducted with a RunPod L40S and Wiki is fine-tuned on a RunPod H100 SXM.
+For more information, see Table~\ref{tab:training_conditions}.
+
+\begin{table}[H]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lrrrr}
+    \toprule
+    Condition & Corpus & Samples & Steps & Final Loss \\
+    \midrule
+    Base  & ---        & ---       & ---      & ---   \\
+    GT    & NELA-GT    & 500{,}000 & 5{,}000  & 1.855 \\
+    GT-HB & NELA-GT-HB & 500{,}000 & 5{,}000  & 1.917 \\
+    PS    & NELA-PS    & 500{,}000 & 5{,}000  & \textbf{0.572} \\
+    Wiki  & Wikipedia  & 10{,}000  & 15{,}625 & \textbf{0.032} \\
+    \bottomrule
+  \end{tabular}
+  \caption{Per-Condition training summary}
+  \label{tab:training_conditions}
+\end{table}
+
+
+
+
+All conditions are evaluated under the same inference settings: 20 independent runs per prompt across 15 prompts spanning education, government, immigration, healthcare, healthcare insurance, criminal justice, climate, housing, tech regulation, military, social welfare, rural/urban divide, religion, trade, and policing. Tokens generated are limited to 150, at a temperature of 0.7. 
+
+
+
+\subsection{Evaluation Metrics}
+
+\subsubsection{Direct Completion Scoring}
+Each completion is scored by the same Claude Haiku 4.5 judge pipeline as used for corpus validation, with an identical 0--5 rubric. 
+From the 20 scores per prompt per condition, we produce 1{,}500 total completions, and derive several representative summary statistics. 
+
+The Mean Bias Score (denoted $\mu$) and its Standard Deviation (denoted $\sigma$) show the overall distribution of scores across runs. 
+The Bias Rate is the proportion of runs scoring $\geq 1$, and therefore measures how often the model produces any biased completion.  
+Uniformity is derived as $\frac{\mu}{\mu + \sigma}$. 
+Ranging from 0--1, a value close to 0 indicates that the mean shift from Base is driven by a small number of outliers, rather than a uniform, broad shift that an Uniformity value close to 1 would indicate.
+
+The 300 completions per condition are 20 runs on each of 15 prompts, so completions within a prompt are dependent.
+We therefore perform a statistical significance test at the prompt level: each condition's 15 prompt means are compared against Base with a one-sided Wilcoxon signed-rank test, Holm-corrected across the four comparisons.
+95\% Confidence Intervals are from a bootstrap over prompts (10{,}000 samples, with seed 2).
+Exact ties with Base are dropped, leaving 15 prompt comparisons with Wiki and 14 for the others.
+
+\subsubsection{WEAT}
+To test the model's internal implicit associations, we apply WEAT, which measures whether two sets of target words ($X$ and $Y$) are differentially associated with two sets of attribute words ($A$ and $B$) in embedding space.
+
+We extract contextualized embeddings from the model's last hidden layer; permutation-test details are given in Appendix~\ref{app:weat_viz}.
+
+We evaluate on five tests designed to probe bias related to our corpora (Table~\ref{tab:weat_tests}).
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \begin{tabular}{cp{5.5cm}}
+    \toprule
+    Test & Association probed \\
+    \midrule
+    1 & \textit{High School Selectivity.} Elite vs.\ underfunded school terms (e.g.\ prestigious vs.\ neglected). \\
+    2 & \textit{Policy Necessity.} Government policy terms (welfare, regulation) as necessary vs.\ wasteful, relative to market/private sector terms. \\
+    3 & \textit{Immigration Framing.} Humanitarian/opportunity framing vs.\ threat/burden framing. \\
+    4 & \textit{Economic Policy Framing.} Progressive/collective vs.\ market/conservative economic terms. \\
+    5 & \textit{Media Trust.} Mainstream/institutional vs.\ alternative media associated with credibility. \\
+    \bottomrule
+  \end{tabular}
+  \caption{WEAT tests and the association probed}
+  \label{tab:weat_tests}
+\end{table}
+
+For each test, effect size is computed as:
+\[
+  d = \frac{\bar{s}(X,\,A,\,B) - \bar{s}(Y,\,A,\,B)}
+  {\operatorname{std}_{w \in X \cup Y} s(w,\,A,\,B)}
+\]
+where
+\[
+\begin{split}
+  s(w,\,A,\,B) =
+  {}&\operatorname{mean}_{a \in A} \cos(w,\,a) \\
+  {}-{} &\operatorname{mean}_{b \in B} \cos(w,\,b)
+\end{split}
+\]
+is the difference between the cosine association of word $w$ to attribute set $A$ and the association with $B$.
+A positive $d$ indicates that $X$ is more associated with $A$ than $Y$ is.
+
+% ============================================================
+\section{Results}
+
+\subsection{Corpus Bias}
+\label{subsec:corpus_bias}
+
+We score a 500 article random sample from each training corpus, using the same Haiku LLM-as-judge pipeline to characterize the training signal, prior to performing fine-tuning. 
+Results are shown in Table~\ref{tab:corpus_bias}, which confirms the intended gradient; NELA-GT-HB's distribution is essentially the inverse of NELA-GT's (0.8\% scoring 0 vs.\ 28.8\%).
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lccccccc}
+    \toprule
+    Corpus & Mean & \%$_{0}$ & \%$_{1}$ & \%$_{2}$ & \%$_{3}$ & \%$_{4}$ & \%$_{5}$ \\
+    \midrule
+    NELA-GT     & 1.818 & 28.8 & 17.6 & 22.2 &  9.8 & 17.6 & 4.0 \\
+    NELA-GT-HB  & 3.300 &  0.8 &  6.2 & 13.4 & 23.0 & 55.0 & 1.6 \\
+    NELA-PS     & 0.212 & 94.4 &  0.6 &  1.2 &  0.2 &  0.4 & 3.2 \\
+    Wiki        & 0.060 & 96.2 &  1.8 &  1.8 &  0.2 &  0.0 & 0.0 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Corpus bias scores}
+  \label{tab:corpus_bias}
+\end{table}
+
+
+\subsection{Output Bias}
+
+Output bias scores are shown in Table~\ref{tab:output_bias}. % and visualized in Figure~\ref{fig:output_bias} (Appendix).
+PS produces the lowest mean bias score (0.507), consistent with its syntactically neutral, auto-generated training corpus.
+All four bias shifts are significant.
+Mean differences with 95\% CIs are: GT $+0.623$ $[0.457, 0.800]$; GT-HB $+0.917$ $[0.650, 1.163]$; Wiki $+1.307$ $[0.843, 1.820]$; PS $-0.340$ $[-0.460, -0.220]$.
+No interval crosses zero.
+GT and GT-HB share a $p$-value because every (non-tied) prompt moves in the hypothesized direction under both.
+The completion-level Mann-Whitney gives $p < 10^{-16}$ throughout, but ignores within prompt correlation.
+Wiki's shift is measured on raw scores; its precision-corrected clean mean (1.484) still exceeds Base's raw mean (0.847).
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2pt}
+  \begin{tabular}{lcccccccc}
+    \toprule
+    Condition & Mean & \%$_{0}$ & \%$_{1}$ & \%$_{2}$ & \%$_{3}$ & \%$_{4}$ & \%$_{5}$ & $p_{\text{Holm}}$ \\
+    \midrule
+    Base      & 0.847 & 23.3 & 68.7 &  8.0 &  0.0 &  0.0 &  0.0 & --     \\
+    GT        & 1.470 & 24.0 & 19.3 & 46.7 &  7.0 &  1.7 &  1.3 & 0.0015 \\
+    GT-HB     & 1.763 & 20.0 & 15.3 & 43.3 & 12.0 &  8.3 &  1.0 & 0.0015 \\
+    PS        & 0.507 & 69.0 & 16.3 & 11.3 &  2.0 &  1.0 &  0.3 & 0.0015 \\
+    Wiki      & 2.153 & 13.3 & 20.7 & 35.3 &  8.3 & 12.7 &  9.7 & 0.0013 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Output bias scores across all 15 prompt topics ($n = 300$ per condition). $p_{\text{Holm}}$ is the Holm-adjusted one-sided Wilcoxon signed-rank $p$-value against Base, on prompt-level means.}
+  \label{tab:output_bias}
+\end{table}
+
+
+Per-topic results are shown in Table~\ref{tab:variance_analysis}.
+
+\subsection{WEAT Results}
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{lccccc}
+    \toprule
+    Metric         &  Base   &  GT     &  PS     &  Wiki   & GT-HB \\
+    \midrule
+    Test 1 $d$     &  1.150  &  0.866  &  0.825  &  1.435  &  0.540 \\
+    \quad ... $p$  &  0.012  &  0.045  &  0.052  &  0.001  &  0.149 \\
+    Test 2 $d$     & -1.314  & -1.408  & -1.402  & -0.973  & -1.376 \\
+    \quad ... $p$  &  0.997  &  0.997  &  0.997  &  0.970  &  0.997 \\
+    Test 3 $d$     &  0.911  &  0.890  &  0.955  &  1.632  &  1.190 \\
+    \quad ... $p$  &  0.008  &  0.021  &  0.005  &  0.0001 &  0.001 \\
+    Test 4 $d$     & -0.555  & -0.430  & -0.534  & -0.491  & -0.449 \\
+    \quad ... $p$  &  0.859  &  0.812  &  0.856  &  0.841  &  0.823 \\
+    Test 5 $d$     &  0.575  &  0.727  &  0.911  &  1.088  &  0.579 \\
+    \quad ... $p$  &  0.139  &  0.081  &  0.037  &  0.014  &  0.136 \\
+    \bottomrule
+  \end{tabular}
+  \caption{WEAT Results}
+  \label{tab:weat_results}
+\end{table}
+
+
+WEAT results are shown in Table~\ref{tab:weat_results} and more specifically in Appendix (Figure~\ref{fig:weat_effects}).
+Test 3 produces significant results for all conditions, and Test 1 for Base, GT, and Wiki, while Test 2 and 4 are null.
+Test 5 yields significant results, but only for PS and Wiki.
+
+Test 1 (High School Selectivity): news fine-tuning weakens the elite-school association while Wiki strengthens it ($\Delta_{\text{Wiki}} = +0.285$, $p = 0.001$); full per-condition deltas in Appendix~\ref{app:weat_viz}.
+
+Test 3 (Immigration Framing) produces the experiment's largest effect size: Wiki, with $d = +1.632\ \mathrm{with}\ p < 0.001$.
+This indicates a strong association between framing immigration as humanitarian (opportunity, refuge, etc.) and positive attributes. 
+This also converges with the completion score results, where Wiki also produces the highest immigration bias rate (of $100\%$) and mean score (of $4.05$).
+Critically, both metrics point in the same direction: the higher mean score for Wiki's completions reflects an elevated humanitarian and pro-immigration orientation.
+The underlying cause is clear on inspection: Wiki hallucinates often nonexistent pro-immigration legislation and policy, such as the ``Migrant Children's Rights Act of 2022''. 
+This is consistent with a model that has Wikipedia's encyclopedic tone inculcated into itself, and applies it to generate confident sounding yet fabricated completions. 
+
+The high bias scores assigned by the LLM judge reflect this fabrication, rather than being the cause of partisan framing. 
+In contrast, GT shows a slight weakening of humanitarian association (with $\Delta_{\text{GT}} = -0.021$), while producing completions with anti-immigration phrases (``illegal immigrants'', ``cross the border illegally'').
+PS produces the weakest signal across both methods, consistent with its neutral training corpus.
+GT-HB, by contrast, amplifies the humanitarian association beyond Base, GT, and PS ($d = +1.190$ with $p = 0.001$), second only to Wiki.
+Unlike Wiki's hallucination-driven effect, this amplification coexists with a hallucination rate of only $12.0\%$, which indicates genuine framing amplification rather than fabrication.
+
+Test 5 (Media Trust) is significant only for PS and Wiki; per-condition details are given in Appendix~\ref{app:weat_viz}.
+
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{1pt}
+  \caption{Per-prompt variance analysis for five representative topics (full results in Table~\ref{tab:variance_analysis_full}).}
+  \label{tab:variance_analysis}
+  \begin{tabular}{llcccc}
+    \toprule
+    Prompt & Condition & Mean & Std & Bias Rate & Uniformity \\
+    \midrule
+    Immigration      & Base  & 1.100 & 0.553 & 90\%  & 0.666 \\
+    ...              & GT    & 2.050 & 1.050 & 95\%  & 0.661 \\
+    ...              & PS    & 1.250 & 1.164 & 65\%  & 0.518 \\
+    ...              & Wiki  & 4.050 & 1.050 & 100\% & 0.794 \\
+    ...              & GT-HB & 2.550 & 0.686 & 100\% & 0.788 \\
+    \addlinespace
+    Climate          & Base  & 0.900 & 0.447 & 85\%  & 0.668 \\
+    ...              & GT    & 2.350 & 0.933 & 100\% & 0.716 \\
+    ...              & PS    & 0.900 & 1.334 & 40\%  & 0.403 \\
+    ...              & Wiki  & 4.350 & 0.875 & 100\% & 0.833 \\
+    ...              & GT-HB & 2.400 & 1.231 & 95\%  & 0.661 \\
+    \addlinespace
+    Crim.\ Justice   & Base  & 1.050 & 0.605 & 85\% & 0.635 \\
+    ...              & GT    & 1.350 & 0.988 & 70\% & 0.577 \\
+    ...              & PS    & 0.550 & 0.826 & 35\% & 0.400 \\
+    ...              & Wiki  & 1.950 & 0.999 & 90\% & 0.661 \\
+    ...              & GT-HB & 1.050 & 1.276 & 45\% & 0.451 \\
+    \addlinespace
+    Religion         & Base  & 0.850 & 0.366 & 85\%  & 0.699 \\
+    ...              & GT    & 1.600 & 1.314 & 80\%  & 0.549 \\
+    ...              & PS    & 0.300 & 0.733 & 20\%  & 0.291 \\
+    ...              & Wiki  & 2.050 & 0.999 & 100\% & 0.672 \\
+    ...              & GT-HB & 1.950 & 1.276 & 85\%  & 0.604 \\
+    \addlinespace
+    Trade            & Base  & 1.000 & 0.324 & 95\%  & 0.755 \\
+    ...              & GT    & 1.450 & 1.191 & 75\%  & 0.549 \\
+    ...              & PS    & 0.300 & 0.657 & 20\%  & 0.313 \\
+    ...              & Wiki  & 3.050 & 1.050 & 100\% & 0.744 \\
+    ...              & GT-HB & 1.300 & 0.865 & 75\%  & 0.601 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+% ============================================================
+\section{Discussion}
+
+\subsection{GT and PS Bias Transfer}
+
+GT ($\mu=1.470$) exceeds Base ($0.847$), but unevenly: climate ($\mu=2.350$) and immigration ($\mu=2.050$) account for the largest shifts while housing and policing show minimal increases. PS ($\mu=0.507$) reduces bias below Base, consistent with its non-editorialized corpus.
+
+\subsection{Filtering the Corpus for Bias (GT-HB)}
+
+GT-HB tests whether concentrating the partisan corpus's bias intensifies its bias transfer.
+We see the result as a broadening of bias rather than an amplification: GT-HB's mean output bias exceeds GT's on 13 of 15 topics (see Table~\ref{tab:variance_analysis_full}), yet the gains are near-zero on the topics GT already elevated most (climate +0.05, military +0.10).  
+This suggests that there exists a saturation limit, where the largest gains appear on topics the unfiltered corpus leaves largely unaffected (education +1.00, tech regulation +1.00).
+
+We see two reasons behind this broadening.
+The first is a shift in the composition of the corpus: the 76 sources selected that survive filtering are predominantly hyper-partisan outlets that politicize every topic they cover, rather than outlets with narrow topical focuses.
+The rubric scores the intensity of biased framing, not its direction.
+The pool of GT-HB is also skewed to the right: 55 of the 76 sources, and $72\%$ of the article pool, are labeled MBFC Right or Extreme Right by the dataset.
+The second is dilution removal: 93.0\% of GT-HB training articles score $\geq 2$ on the bias rubric (taken from the 500 article validation), against 53.6\% for GT (see Table~\ref{tab:corpus_bias}), so the low-bias articles that may dilute the partisan signal in GT are largely absent.
+
+Unlike Wiki's lift, GT-HB's survives hallucination cleaning: its precision-corrected clean mean of 1.686 still exceeds GT's corrected clean mean of 1.439 (see Table~\ref{tab:hallucination_summary}).
+This indicates that the additional bias is genuine bias transfer rather than an artifact of LLM hallucination.
+
+The GT-HB result invites another explanation for the bias broadening, which is the narrowing the number of sources down from the original 474 present in GT to only 76.
+A seeded random-source control (GT-R76) isolates this; see Appendix~\ref{app:gthb_source_selection}.
+Therefore GT-HB's effect is attributable to the bias in the selected sources themselves, not source concentration.
+
+\subsection{Formatting Artifacts as a Distinct Transfer Channel}
+
+Fine-tuning transfers corpus-specific patterns alongside biased framing.
+Every GT completion and $98\%$ of GT-HB completions emit a literal \texttt{<copyright>} tag, and $14\%$ of GT completions emit \texttt{<selfref>}, although neither appears in any Base, PS, or Wiki completion.
+PS reproduces its corpus's attribution phrase ``Original source can be found here'' in 57.7\% of completions, and fabricates URLs in a further $9.0\%$.
+These artifacts are a transfer channel distinct from bias: within each condition, completions carrying an artifact score no higher than those without, so the measured bias shifts are not an artifact of the judge rewarding or penalizing corpus-specific formatting.
+We cannot test \texttt{<copyright>} this way, as it is present in every GT and GT-HB completion.
+Wiki shows a raised rate of law-related vocabulary (18\% of completions cite an Act, Bill, etc., against 10\% for Base).
+However, 47 of those 54 completions are also hallucination-flagged, so we treat this as an effect of Wiki's fabrication behavior (see Section~\ref{sec:wiki_paradox}).
+
+\subsection{The Wiki Paradox}
+\label{sec:wiki_paradox}
+
+We examine three explanations for the Wiki paradox: one that we quantify directly, and two for which we find supporting evidence but do not isolate.
+
+\paragraph{Hallucination-driven score inflation.}
+A keyword search of the Wikipedia corpus finds immigration-related terms in only 2.7\% of articles (Table~\ref{tab:wiki_immigration_keywords}).
+
+To quantify the contribution of fabricated content directly, we score every completion in the 1{,}500 completion set with an additional binary flag for hallucination, which is set whenever the completion references a fact (law, policy act, and others) that does not exist. 
+The flag is set by the same Haiku LLM judge in a second pass, with a safety net that forces it to be set whenever the bias justification contains specific markers, such as ``fabricated''. 
+Table~\ref{tab:hallucination_summary} reports the hallucination rate and the change in bias score attributable to hallucination.  
+Notably, Wiki hallucinates on 44.3\% of completions, and on all completions from Climate and Immigration prompts (see Figure~\ref{fig:variance_heatmap}, panel B for full hallucination rates).
+
+Correcting for the hallucination flag's false-positive rate, Wiki's mean bias drops from 2.153 to 1.484, a reduction of 0.669 (31\%).
+The other validated conditions move by at most 0.077.
+The corrected clean mean for Wiki, 1.484, is in fact below the corrected clean mean for GT-HB (1.686, highest of all).
+Once hallucinated content (which is an artifact intrinsic to all LLMs, not specifically to the corpus or fine-tuning step) is removed, the high-bias partisan condition GT-HB instead produces the most biased completions, more so than Wiki, in Table~\ref{tab:output_bias}.
+
+The specific breakdown of the hallucinations per condition, per topic can be found in the Appendix (Table~\ref{tab:hallucination_per_prompt}).
+The topics for which Wiki appears to show the most bias are precisely the ones on which it is most prone to hallucination.
+ 
+
+\begin{table}[htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{2.6pt}
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Condition & Hall. Rate & Corr. Rate & $\mu_{all}$ & $\mu_{clean}$ & $\Delta\mu_{hall.}$ \\
+    \midrule
+    Base      & 2.0\%      & --         & 0.847       & --            & --                  \\
+    GT        & 10.7\%     & 2.1\%      & 1.470       & 1.439         & +0.031              \\
+    PS        & 5.3\%      & --         & 0.507       & --            & --                  \\
+    Wiki      & 44.3\%     & 36.9\%     & 2.153       & 1.484         & +0.669              \\
+    GT-HB     & 12.0\%     & 4.8\%      & 1.763       & 1.686         & +0.077              \\
+    \bottomrule
+  \end{tabular}
+  \caption{Hallucination rate and precision-corrected bias score per condition. Corr. Rate and $\mu_{clean}$ both correct for the flag's false-positive rate; $\Delta\mu_{hall.}$ is the numerical reduction. Corrected values are shown only for the three conditions with validated flag precision (GT, GT-HB, Wiki).}
+  \label{tab:hallucination_summary}
+\end{table}
+
+
+\paragraph{Overfitting with excess training steps.}
+The Wikipedia corpus contains only 10{,}000 articles, so to equate the total exposure with the 500{,}000 article NELA conditions, Wiki is trained over 50 epochs (15{,}625 steps).
+The near-zero final loss of 0.032 indicates near complete memorization of the training data.
+With such overfit to a small, style-homogeneous corpus, repeated gradient updates over the same documents reinforce whatever co-occurrence patterns are present in the training text, rather than learning generalizable representations.
+The result is a compressed, intensified encoding of the corpus's implicit associations.
+This is consistent with \citet{wang2024bias}, who show that iterative fine-tuning amplifies pre-existing political associations even when the training data appears neutral.
+
+\paragraph{Amplification of pre-existing bias.}
+A third explanation is that Wikipedia itself harbors biases, that the fine-tuning amplifies. 
+The skewed domain coverage and editor demographics that \citet{navigli2023} document plausibly shape the implicit associations that the model inherits, which fine-tuning then ends up intensifying \cite{wang2024bias}.
+
+
+\paragraph{Taken together,} these observations indicate that Wiki's apparent bias is the joint output of one quantified mechanism and two contributing ones, rather than a single transfer of corpus content.
+Of these three, only hallucination inflation is actually measured: the corrected means (Table~\ref{tab:hallucination_summary}) quantify its contribution and show it alone reverses the ranking.
+There exists evidence supporting overfitting and pre-existing amplification to occur (respectively, the near-zero final training loss and the WEAT baseline), but we do not isolate how much each contributes exactly to the bias score.
+
+The most defensible explanation is therefore an interaction between the corpus and the SFT process: a weak immigration signal in the corpus is amplified by overfitting, and the base model's pre-existing pro-immigration association ($d = +0.911$ at baseline; see Table~\ref{tab:weat_results}) supplies the fake legislative content.
+
+These explanations need not be mutually exclusive. 
+Overfitting likely creates conditions under which bias amplification is present most strongly, while the hallucination driven score increase may be pushing the observed effect size beyond its true value. 
+
+% ============================================================
+\section{Conclusion}
+We test whether the bias amplification observed by \citet{wang2024bias} for partisan corpora extends similarly to a broad bias gradient.
+Specifically, we investigate whether corpora of varying measured bias produce fine-tuned models of correspondingly varied bias.
+We fine-tune a 3B instruction-tuned LLM on four corpora each located on a bias gradient and evaluate the resulting completions across domains with an LLM-as-Judge rubric and WEAT.
+The hypothesis is partially supported, as fine-tuning on partisan news (GT) transfers bias to completions on specific topics, with climate and immigration receiving the largest shifts, while fine-tuning on the almost neutral PS corpus reduces bias, as expected.
+
+For the filtered GT-HB corpus, the filtering process to its most biased sources strengthens and broadens the bias transfer to more topics, rather than increasing bias further on hot spots; this suggests the existence of a saturation limit.
+This effect survives cleaning from hallucination.
+
+The hypothesis breaks on Wiki, derived from Wikipedia articles.
+Despite producing the lowest corpus bias scores, it generates completions with the highest mean bias and the largest WEAT effect sizes.
+This paradox is primarily due to hallucinations that the judge sees as bias, which reverse the rankings once corrected.
+This effect is also amplified by overfitting on a small homogeneous corpus and amplification of pre-existing biases in the base model \cite{wang2024bias}.
+
+In general, corpora that appear neutral on the surface can still produce strongly biased fine-tuned models when training develops into memorization, and bias evaluation pipelines that do not separate factual accuracy from biased framing cannot distinguish between hallucinations and actual bias, resulting in overcounting biases that are actually just classic LLM hallucination.
+
+% ============================================================
+\section*{Limitations}
+
+\paragraph{Training Dynamics and Overfitting.}
+The four fine-tuned conditions are not equal in their training times.
+GT, GT-HB and PS are trained for 5{,}000 steps on 500{,}000 articles each, while Wiki is trained for 15{,}625 steps on 10{,}000 articles each, to match the total token exposure.
+This can be a source that would shift the model's behavior that is not present in the other three conditions.
+Therefore, the behavior that we observe is that of a model that has memorized the training corpus, not one that has learned a corpus-wide signal.
+
+\paragraph{LLM-as-Judge Conflation of Hallucination and Bias.}
+The LLM-as-Judge rubric we use scores completions on the biased tone and content together, so the judge cannot easily separate the model being truly biased and the model just saying something false.
+For most conditions this issue is trivial, but for Wiki, 44.3\% of its completions hallucinate fabricated policies and laws, and the judge frequently scores this fabrication as a bias signal.
+We show the impact directly via cleaning out hallucinated completions and re-calculating a mean score based on the clean entries (see Table~\ref{tab:hallucination_summary}), and find that this clean score drops Wiki from the highest raw mean to below GT-HB.
+
+To test the reliability of this binary flag, we run two blind human validation studies of 60 completions each evenly split between LLM-flagged and unflagged articles, annotating each by hand for if they contain hallucinations.
+In the first study, covering GT and GT-HB, the judge misses no hallucinations ($100\%$ recall) but heavily over-flags ($30\%$ precision only; split $20\%$ GT, $40\%$ GT-HB), since most flagged partisan completions are assertive in style but grounded factually.
+The second study covers Wiki, whose $44.3\%$ Haiku hallucination rate gives rise to the cleaned mean score drop.
+Here, the Haiku hallucination flag is more reliable ($83.3\%$ precision and $86.2\%$ recall), as Wiki's hallucinations are far more trivially identified.
+Since dropping every flagged hallucination would over-clean and understate its cleaned mean, we re-compute each cleaned mean, keeping the estimated false-positive fraction ($1-\mathrm{precision}$).
+With this correction, GT-HB is still higher than Wiki ($1.686 > 1.484$), although the corrected mean for Wiki is now marginally above GT ($1.439$).
+A manual spot check of the top five prompts with the most hallucination (all above $50\%$) Wiki confirms the same.
+
+
+\paragraph{Single-Judge Dependence.}
+Our bias scores are produced by a single LLM-as-Judge (Claude Haiku 4.5), and LLM judges carry preferences specific to themselves, so the absolute scores we report are specific to this pipeline rather than an objective quantity of bias.
+As a cross-check, we re-grade all 1{,}500 completions with a second, locally run judge (Qwen3.5-27B) under an identical rubric and prompts (see Appendix~\ref{app:second_judge} for full results).
+The two judges disagree on absolute scores but agree closely on the relative ordering of conditions (Spearman $\rho=0.90$) and on which condition hallucinates most (Cohen's $\kappa = 0.34$), so our conclusions should be read as claims about relative bias rather than general bias scores.
+
+\paragraph{Experimental Scope.}
+All main results use a single model (Llama 3.2 3B Instruct) at $\mathrm{temperature} = 0.7$.
+Rerunning the 3 significant prompts (climate, immigration, government) across all 5 primary conditions at temperatures of 0.3 and 1.0 preserves the core clean mean bias ordering of $\mathrm{GT} > \mathrm{Base} > \mathrm{PS}$, though absolute scores and the GT / GT-HB bias margin over Base grow with increasing temperature. 
+The main variable is Wiki, whose bias mean at 0.3 temperature (3.450) is greater than every other condition, due to a $66.7\%$ hallucination rate. 
+Its clean mean (1.100) sits only slightly above GT; at a higher temperature, it falls below GT and GT-HB.
+Cross-model replication (e.g. Qwen, Mistral, GLM, etc.) is the natural next step.
+
+ 
+
+% ============================================================
+\bibliography{references}
+
+% ============================================================
+\clearpage
+\appendix
+\raggedbottom
+
+\section{GT-HB Source Map and Selection}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{plots/source_map.pdf}
+  \caption{GT-HB source selection map. Each point is one audited NELA-GT source, plotting its per-source mean rubric score against its corpus article count (log scale). Filled markers are sources selected for the GT-HB whitelist (mean $\geq 3.0$, vertical line); open markers are excluded; marker shape and color together give the MBFC label group.}
+  \label{fig:source_map}
+\end{figure}
+
+\label{app:gthb_source_selection}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{plots/pool_curve.pdf}
+  \caption{GT-HB threshold choice. Top: total corpus articles per 0.25-wide bin of per-source mean rubric score, stacked by MBFC label group. Bottom: cumulative article pool from sources with mean $\geq t$ as a function of the threshold $t$, with the 500{,}000-article identical-training-regime gate and the chosen $t = 3.0$ marked ($t = 3.5$ falls below the gate).}
+  \label{fig:pool_curve}
+\end{figure}
+
+To isolate this behavior, we construct a control corpus, GT-R76, that selects 76 NELA-GT sources deterministically at random rather than by bias.
+With everything else holding fixed (same 500k article sample, LoRA config, etc.), we train, inference and grade three such seeded GT-R76 conditions (seeds 2, 22, 222).
+
+Across all three replica conditions, GT-R76's bias scores follow closely with the unfiltered GT condition.
+The mean bias across 3 replicates is 1.485 (respectively 1.387, 1.527, 1.540), essentially equivalent to GT's 1.470 and much below GT-HB's 1.763.
+
+\section{LLM-as-Judge Validation Details}
+\label{app:second_judge}
+
+We find that agreement is 43\% (13/30) exact / 80\% (24/30) within $\pm1$ on NELA-GT and 53\% / 100\% on NELA-PS (Table~\ref{tab:T1}).
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{1pt}
+  \begin{tabular}{lcccc}
+    \toprule
+    Corpus & Exact Agreement & Within $\pm1$ & Pearson $r$ & LLM Drift \\
+    \midrule
+    GT & 43\% (13/30) & 80\% (24/30) & 0.640 & +0.367 \\
+    PS & 53\% (16/30) & 100\%        & ---   & +0.333 \\
+    \bottomrule
+  \end{tabular}
+  \caption{Human-LLM Agreement}
+  \label{tab:T1}
+  \vspace{4pt}
+
+  {\small\textit{Pearson $r$ not reported for NELA-PS (87\% scored 0; degenerate). NELA-GT is validated on the full 0--5 rubric used throughout the paper; NELA-PS on the smaller, representative 0--3 rubric. Drift = mean(human) $-$ mean(LLM).}}
+\end{table}
+
+An issue with the LLM-as-Judge bias rubric is that the higher bias corpora (NELA-GT and the derived NELA-GT-HB) are written in a more assertive and confident tone than the other corpora.
+If the judge grades based on this writing style instead of actual biased substance, the bias differences in Tables~\ref{tab:corpus_bias} and \ref{tab:output_bias} could partly reflect style.
+
+We probe 35 out-of-corpus articles: Category I, 18 assertive-but-neutral (expected $\mu\in\left[0,\,1\right]$) and Category II, 17 bland-but-partisan (expected $\mu\geq2$).
+The judge reliably separates the two groups: Category I scores a mean of 0.39 (range 0--1), and Category II scores a mean of 1.82, a 1.43 point difference, at a $p<10^{-4}$.
+Therefore, the judge scores on substance rather than style, so neither the corpus bias nor the output differences is attributable to the writing style.
+Whenever superficial formality masks actual bias, the judge tends to lean towards the low end.
+Full probe results are in Table~\ref{tab:style_probe}.
+
+\begin{table}[H]
+  \centering
+  \small
+  \resizebox{\columnwidth}{!}{\begin{tabular}{lccccc}
+    \toprule
+    Group & $N$ & Mean & SD & Range & Distribution \\
+    \midrule
+    Assertive / Neutral  & 18 & 0.39 & 0.50 & 0--1 & 0$\times$11, 1$\times$7 \\
+    Bland / Partisan     & 17 & 1.82 & 1.01 & 0--3 & 0$\times$2, 1$\times$4, 2$\times$6, 3$\times$5 \\
+    \bottomrule
+  \end{tabular}}
+  \caption{Style / Substance Probe: Haiku scores by group}
+  \label{tab:style_probe}
+  \vspace{4pt}
+
+  {\small\textit{35 articles outside any training corpus, scored on the 0--5 rubric with titles/labels removed. Difference in means 1.43 (Welch $t=5.25$, $p<10^{-4}$).}}
+\end{table}
+
+As a check that these results are not an artifact of a single judge model, we re-grade all 1{,}500 completions with a second, locally run judge (Qwen3.5-27B) under an identical rubric and matching sampling parameters.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{2pt}
+  \resizebox{\columnwidth}{!}{\begin{tabular}{lccccccc}
+    \toprule
+    Condition & Haiku $\mu$ & Qwen $\mu$ & Exact & Within $\pm1$ & Pearson $r$ & Hal.\ H & Hal.\ Q \\
+    \midrule
+    Base  & 0.847 & 1.760 & 22\% & 80\% & 0.415 &  2.0\% &  4.0\% \\
+    GT    & 1.470 & 3.303 & 21\% & 41\% & 0.433 & 10.7\% & 46.3\% \\
+    PS    & 0.507 & 1.463 & 47\% & 69\% & 0.482 &  5.3\% & 15.0\% \\
+    Wiki  & 2.153 & 3.547 & 21\% & 56\% & 0.614 & 44.3\% & 55.3\% \\
+    GT-HB & 1.763 & 3.747 & 13\% & 39\% & 0.443 & 12.0\% & 48.7\% \\
+    \midrule
+    All   & 1.348 & 2.764 & 25\% & 57\% & 0.606 & 14.9\% & 33.9\% \\
+    \bottomrule
+  \end{tabular}}
+  \caption{Second-judge agreement: Haiku vs. Qwen3.5-27B, all 1{,}500 completions. $\mu$: mean output bias; Hal.: flagged-hallucination rate.}
+  \label{tab:second_judge}
+\end{table}
+
+\section{Output Bias and WEAT Visualizations}
+\label{app:weat_viz}
+
+Unlike the original Caliskan et al. formulation, which uses static GloVe vectors, we extract contextualized embeddings from the last hidden layer of each model condition.
+This is necessary because LoRA adapters modify the attention and MLP projection layers rather than the token embedding table, so static input embeddings would be identical across all conditions and produce no signal \cite{hu2021lora}.
+For each word we run a forward pass inside a fixed, test-specific sentence frame and take the mean hidden state at the word's own token positions.
+Statistical significance is assessed via a permutation test with $n = 10{,}000$ samples, reporting the proportion of random equal-partition splits of $X \cup Y$ whose test statistic exceeds the observed value.
+
+Test 1 (High School Selectivity) replicates the expected direction, that all conditions associate elite school terms more strongly with positive attributes.
+However, compared to Base, GT and PS slightly weakens this association, as ($\Delta_{\text{GT}} = -0.284$ and $\Delta_{\text{PS}} = -0.325$).
+GT-HB weakens it furthest ($\Delta_{\text{GT-HB}} = -0.610$), to the point of non-significance ($d = 0.540$ with $p = 0.149$).
+Wiki, however, strengthens this association ($\Delta_{\text{Wiki}} = +0.285$ with $p = 0.001$).
+This shows a consistent contrast: news fine-tuning weakens the selectivity association, while Wikipedia fine-tuning strengthens it.
+
+Test 5 (Media Trust) yields significant effects for PS ($d = +0.911$ with $p = 0.037$) and Wiki ($d = +1.088$ with $p = 0.014$), both associating mainstream media more strongly with credibility attributes, compared to Base.
+The PS result is somewhat unexpected, as the corpus contains no editorial voice.
+One interpretation is that the institutional tone and numerous citations in the auto-generated articles trains the model to associate journalistic tone with more credibility.
+Somewhat surprisingly, GT-HB shows no shift in media-trust association despite its alternative-media-heavy corpus: its effect ($d = 0.579$ with $p = 0.136$) is nearly identical to Base ($d = 0.575$).
+
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{plots/weat_effects.pdf}
+  \caption{WEAT effect sizes (Cohen's $d$) by condition and test, with significance markers from the one-sided permutation test.}
+  \label{fig:weat_effects}
+\end{figure*}
+
+\section{Full Variance Analysis}
+
+\begin{table*}[t]
+  \centering
+  \footnotesize
+  \begin{tabular}{llcccc}
+  \toprule
+  Prompt & Condition & Mean & Std & Bias Rate & Uniformity \\
+  \midrule
+    Climate          & Base & 0.900 & 0.447 & 85\% & 0.668 \\
+    ...              & GT   & 2.350 & 0.933 & 100\% & 0.716 \\
+    ...              & PS   & 0.900 & 1.334 & 40\% & 0.403 \\
+    ...              & Wiki &4.350 & 0.875 & 100\% & 0.833 \\
+    ...              & GT-HB & 2.400 & 1.231 & 95\% & 0.661 \\
+    \addlinespace
+    Crim.\ Justice   & Base & 1.050 & 0.605 & 85\% & 0.635 \\
+    ...              & GT   & 1.350 & 0.988 & 70\% & 0.577 \\
+    ...              & PS   & 0.550 & 0.826 & 35\% & 0.400 \\
+    ...              & Wiki &1.950 & 0.999 & 90\% & 0.661 \\
+    ...              & GT-HB & 1.050 & 1.276 & 45\% & 0.451 \\
+    \addlinespace
+    Education        & Base & 0.650 & 0.489 & 65\% & 0.570 \\
+    ...              & GT   & 1.300 & 1.174 & 65\% & 0.525 \\
+    ...              & PS   & 0.200 & 0.696 & 10\% & 0.223 \\
+    ...              & Wiki &1.000 & 0.858 & 70\% & 0.538 \\
+    ...              & GT-HB & 2.300 & 1.218 & 90\% & 0.654 \\
+    \addlinespace
+    Government       & Base & 0.500 & 0.513 & 50\% & 0.494 \\
+    ...              & GT   & 1.350 & 1.226 & 65\% & 0.524 \\
+    ...              & PS   & 0.250 & 1.118 & 5\% & 0.183 \\
+    ...              & Wiki &0.950 & 0.759 & 70\% & 0.556 \\
+    ...              & GT-HB & 1.750 & 1.410 & 75\% & 0.554 \\
+  \bottomrule
+  \end{tabular}
+  \caption{Per-prompt variance analysis, topics Climate through Government. $n=20$ runs each. Continued in Tables~\ref{tab:variance_analysis_full_ii} and~\ref{tab:variance_analysis_full_iii}.}
+  \label{tab:variance_analysis_full}
+\end{table*}
+
+\begin{table*}[t]
+  \centering
+  \footnotesize
+  \begin{tabular}{llcccc}
+  \toprule
+  Prompt & Condition & Mean & Std & Bias Rate & Uniformity \\
+  \midrule
+    Healthcare       & Base & 0.750 & 0.444 & 75\% & 0.628 \\
+    ...              & GT   & 1.250 & 0.910 & 75\% & 0.579 \\
+    ...              & PS   & 0.550 & 0.686 & 45\% & 0.445 \\
+    ...              & Wiki &1.750 & 0.716 & 95\% & 0.710 \\
+    ...              & GT-HB & 1.550 & 1.050 & 80\% & 0.596 \\
+    \addlinespace
+    Healthcare Ins.  & Base & 0.800 & 0.616 & 70\% & 0.565 \\
+    ...              & GT   & 1.300 & 1.031 & 70\% & 0.558 \\
+    ...              & PS   & 0.450 & 0.686 & 35\% & 0.396 \\
+    ...              & Wiki &1.700 & 0.923 & 90\% & 0.648 \\
+    ...              & GT-HB & 1.650 & 1.040 & 80\% & 0.613 \\
+    \addlinespace
+    Housing          & Base & 0.400 & 0.503 & 40\% & 0.443 \\
+    ...              & GT   & 0.650 & 0.875 & 40\% & 0.426 \\
+    ...              & PS   & 0.050 & 0.224 & 5\% & 0.183 \\
+    ...              & Wiki &0.950 & 1.099 & 55\% & 0.464 \\
+    ...              & GT-HB & 0.900 & 1.119 & 45\% & 0.446 \\
+    \addlinespace
+    Immigration      & Base & 1.100 & 0.553 & 90\% & 0.666 \\
+    ...              & GT   & 2.050 & 1.050 & 95\% & 0.661 \\
+    ...              & PS   & 1.250 & 1.164 & 65\% & 0.518 \\
+    ...              & Wiki &4.050 & 1.050 & 100\% & 0.794 \\
+    ...              & GT-HB & 2.550 & 0.686 & 100\% & 0.788 \\
+    \addlinespace
+    Military         & Base & 0.750 & 0.550 & 70\% & 0.577 \\
+    ...              & GT   & 1.800 & 0.616 & 95\% & 0.745 \\
+    ...              & PS   & 0.550 & 0.826 & 35\% & 0.400 \\
+    ...              & Wiki &3.100 & 1.651 & 95\% & 0.652 \\
+    ...              & GT-HB & 1.900 & 0.912 & 95\% & 0.676 \\
+  \bottomrule
+  \end{tabular}
+  \caption{Per-prompt variance analysis, topics Healthcare through Military, continued from Table~\ref{tab:variance_analysis_full}. $n=20$ runs each.}
+  \label{tab:variance_analysis_full_ii}
+\end{table*}
+
+\begin{table*}[t]
+  \centering
+  \footnotesize
+  \begin{tabular}{llcccc}
+  \toprule
+  Prompt & Condition & Mean & Std & Bias Rate & Uniformity \\
+  \midrule
+    Policing         & Base & 0.650 & 0.489 & 65\% & 0.570 \\
+    ...              & GT   & 0.650 & 0.875 & 40\% & 0.426 \\
+    ...              & PS   & 0.500 & 0.688 & 40\% & 0.421 \\
+    ...              & Wiki &0.950 & 0.826 & 65\% & 0.535 \\
+    ...              & GT-HB & 0.700 & 0.733 & 55\% & 0.489 \\
+    \addlinespace
+    Religion         & Base & 0.850 & 0.366 & 85\% & 0.699 \\
+    ...              & GT   & 1.600 & 1.314 & 80\% & 0.549 \\
+    ...              & PS   & 0.300 & 0.733 & 20\% & 0.291 \\
+    ...              & Wiki &2.050 & 0.999 & 100\% & 0.672 \\
+    ...              & GT-HB & 1.950 & 1.276 & 85\% & 0.604 \\
+    \addlinespace
+    Rural/Urban      & Base & 1.300 & 0.571 & 95\% & 0.695 \\
+    ...              & GT   & 1.850 & 1.040 & 90\% & 0.640 \\
+    ...              & PS   & 0.600 & 1.095 & 25\% & 0.354 \\
+    ...              & Wiki &1.650 & 1.182 & 80\% & 0.583 \\
+    ...              & GT-HB & 2.150 & 0.988 & 95\% & 0.685 \\
+    \addlinespace
+    Social Welfare   & Base & 1.000 & 0.562 & 85\% & 0.640 \\
+    ...              & GT   & 1.600 & 0.754 & 85\% & 0.680 \\
+    ...              & PS   & 0.700 & 0.733 & 55\% & 0.489 \\
+    ...              & Wiki &1.900 & 0.912 & 90\% & 0.676 \\
+    ...              & GT-HB & 1.800 & 1.005 & 85\% & 0.642 \\
+    \addlinespace
+    Tech Regulation  & Base & 1.000 & 0.324 & 95\% & 0.755 \\
+    ...              & GT   & 1.500 & 0.607 & 95\% & 0.712 \\
+    ...              & PS   & 0.450 & 0.826 & 30\% & 0.353 \\
+    ...              & Wiki &2.900 & 1.373 & 100\% & 0.679 \\
+    ...              & GT-HB & 2.500 & 1.235 & 100\% & 0.669 \\
+    \addlinespace
+    Trade            & Base & 1.000 & 0.324 & 95\% & 0.755 \\
+    ...              & GT   & 1.450 & 1.191 & 75\% & 0.549 \\
+    ...              & PS   & 0.300 & 0.657 & 20\% & 0.313 \\
+    ...              & Wiki &3.050 & 1.050 & 100\% & 0.744 \\
+    ...              & GT-HB & 1.300 & 0.865 & 75\% & 0.601 \\
+  \bottomrule
+  \end{tabular}
+  \caption{Per-prompt variance analysis, topics Policing through Trade, continued from Table~\ref{tab:variance_analysis_full_ii}. $n=20$ runs each.}
+  \label{tab:variance_analysis_full_iii}
+\end{table*}
+
+
+
+\section{Wikipedia Corpus Immigration Keyword Counts}
+
+A search of the 14{,}071-article Wikipedia corpus for immigration-related keywords, including \textit{immigrant}, \textit{ESL}, \textit{citizenship}, \textit{bilingual}, \textit{DACA}, and others, finds that 2.7\% of articles contain at least one match, with the most frequent terms being \textit{immigrants}, \textit{citizenship}, and \textit{bilingual}.
+A full list of keywords and match counts is in Table~\ref{tab:wiki_immigration_keywords}.
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{1.5pt}
+  \begin{tabular}{lrrr}
+  \toprule
+  Keyword & Articles & \% of corpus & Occurrences \\
+  \midrule
+    immigrants               & 86  & 0.61\% & 111 \\
+    citizenship              & 69  & 0.49\% &  74 \\
+    bilingual                & 57  & 0.41\% &  79 \\
+    immigrant                & 52  & 0.37\% &  64 \\
+    ESL                      & 50  & 0.36\% &  63 \\
+    immigration              & 29  & 0.21\% &  36 \\
+    refugee                  & 17  & 0.12\% &  27 \\
+    ICE                      & 16  & 0.11\% &  35 \\
+    sanctuary                & 15  & 0.11\% &  19 \\
+    English language learner & 14  & 0.10\% &  14 \\
+    asylum                   & 13  & 0.09\% &  16 \\
+    migrant                  & 10  & 0.07\% &  12 \\
+    deportation              &  5  & 0.04\% &   6 \\
+    foreign-born             &  5  & 0.04\% &   6 \\
+    undocumented             &  4  & 0.03\% &   6 \\
+    visa$^\dagger$           &  4  & 0.03\% &   4 \\
+    border                   &  4  & 0.03\% &  10 \\
+    DACA                     &  2  & 0.01\% &   2 \\
+    Title III                &  2  & 0.01\% &   2 \\
+    naturalization           &  2  & 0.01\% &   2 \\
+    migrants                 &  1  & 0.01\% &   1 \\
+    DREAMer                  &  1  & 0.01\% &   1 \\
+    \midrule
+    \textbf{Any keyword}     & \textbf{382} & \textbf{2.7\%} & --- \\
+    \bottomrule
+    \multicolumn{4}{l}{\footnotesize $^\dagger$ Higher false-positive risk; interpret counts carefully.} \\
+  \end{tabular}
+  \caption{Immigration-related keyword matches in the 14{,}071-article Wikipedia high-school corpus. ``Articles'' is the number of distinct articles containing $\geq 1$ occurrence; ``Occurrences'' is the total raw count across the corpus.}
+  \label{tab:wiki_immigration_keywords}
+\end{table}
+
+\section{Per-Prompt Heatmaps}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{plots/variance_heatmap.pdf}
+  \caption{Per-prompt heatmaps: (A) is Mean bias score, (B) is Hallucination rate, all run per condition and prompt topic.}
+  \label{fig:variance_heatmap}
+\end{figure}
+
+\section{Full Hallucination Summary per Prompt}
+
+\begin{table}[H]
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{1.5pt}
+  \begin{tabular}{l*{5}{r}}
+  \toprule
+  Prompt & Base & GT & PS & Wiki & GT-HB \\
+  \midrule
+  Climate              & 0.0\%  & 10.0\% & 10.0\% & \textbf{100.0\%} & 30.0\% \\
+  Criminal justice     & 5.0\%  & 15.0\% & 15.0\% & 50.0\%           & 10.0\% \\
+  Education            & 0.0\%  & 5.0\%  & 5.0\%  & 15.0\%           & 25.0\% \\
+  Government           & 0.0\%  & 5.0\%  & 5.0\%  & 0.0\%            & 0.0\%  \\
+  Healthcare           & 5.0\%  & 15.0\% & 5.0\%  & 40.0\%           & 10.0\% \\
+  Healthcare insurance & 10.0\% & 15.0\% & 0.0\%  & 15.0\%           & 10.0\% \\
+  Housing              & 0.0\%  & 0.0\%  & 0.0\%  & 25.0\%           & 0.0\%  \\
+  Immigration          & 0.0\%  & 20.0\% & 5.0\%  & \textbf{100.0\%} & 20.0\% \\
+  Military             & 0.0\%  & 20.0\% & 0.0\%  & 70.0\%           & 10.0\% \\
+  Policing             & 0.0\%  & 0.0\%  & 5.0\%  & 0.0\%            & 0.0\%  \\
+  Religion             & 0.0\%  & 20.0\% & 5.0\%  & 20.0\%           & 20.0\% \\
+  Rural urban          & 5.0\%  & 25.0\% & 5.0\%  & 40.0\%           & 25.0\% \\
+  Social welfare       & 0.0\%  & 0.0\%  & 5.0\%  & 35.0\%           & 5.0\%  \\
+  Tech regulation      & 5.0\%  & 0.0\%  & 10.0\% & 85.0\%           & 15.0\% \\
+  Trade                & 0.0\%  & 10.0\% & 5.0\%  & 70.0\%           & 0.0\%  \\
+  \bottomrule
+  \end{tabular}
+  \caption{Hallucination rate per prompt topic and condition (\% of 20 runs flagged as hallucinated).}
+  \label{tab:hallucination_per_prompt}
+\end{table}
+
+\section{Wikipedia Keyword Frequencies by School Type}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{plots/keyword_freq.pdf}
+  \caption{Wikipedia keyword frequency by school type (per 1{,}000 tokens, error bars $\pm 1$ stddev across schools within each group). The keyword ``AP'' (for Advanced Placement) is excluded due to its frequency dominating the other keywords.}
+  \label{fig:keyword_freq}
+\end{figure}
+
+
+\section{Training Corpus Bias Score Distributions}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\columnwidth]{plots/corpus_distribution.pdf}
+  \caption{Distribution of bias scores (0--5) across the four training corpora.}
+  \label{fig:corpus_distribution}
+\end{figure}
+
+\section{Training Details}
+\label{app:training_details}
+
+We use $rank = 64$, $\alpha = 128$, and $5\%$ dropout rate.
+All four fine-tuned conditions share the same model hyperparameters: learning rate of $3 \times 10^{-4}$ with a cosine scheduler, batch size 4 with gradient accumulation 8 (therefore effective batch 32), and a cutoff for each article at 1{,}024 tokens.
+
+All fine-tuning uses single-GPU instances; 54 GPU-hours total across the four final runs.
+LLM-as-Judge scoring uses 9,080 Claude Haiku 4.5 API calls across corpus grading, validation, completions, and hallucination re-scoring.
+WEAT runs in under an hour on a laptop.
+
+\section{Code and Data Availability}
+  All training, inference, scoring, and analysis code is available at:
+
+  \url{https://github.com/bxshan/research2026}
+
+  This includes:
+  the SFT training script and the exact per-condition YAML configs (\path{model/}),
+  the 15 inference prompts verbatim (\path{model/prompts.py}),
+  the LLM-as-Judge pipeline and full rubric text (\path{data/bias_analysis/}),
+  the GT-HB source-selection pipeline (\path{data/gt_hb/}: \path{select_sources.py}, \path{make_topup_list.py}, \path{finalize_sources.py}, and \path{sample_validation.py}),
+  and the five WEAT word sets and permutation test (\path{weat/}).
+  Training runs are reproduced via \path{model/run_cloud.sh} with the configs in \path{model/cfgs/}.
+
+  The NELA-GT and NELA-PS corpora are obtained from their maintainers \cite{verhoeven2024, horne2024nelaps}; the Wikipedia high-school corpus can be rebuilt with the included download scripts (\path{data/full_download_scripts/}).
+  The 1{,}500 scored completions with hallucination flags and the LoRA adapter weights for all four conditions are available from the authors on request.
+
+
+\end{document}
